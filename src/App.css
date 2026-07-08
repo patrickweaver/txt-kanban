@@ -199,12 +199,12 @@
   font-size: 13px;
   margin-top: 6px;
   padding: 2px 6px;
-  display: none;
 }
 
-.card:hover .card-add-note,
-.card:focus-within .card-add-note {
-  display: block;
+/* The add-card composer replaces the button below the card list; give it the
+   same offset so it doesn't sit flush against the card above. */
+.column > .inline-edit {
+  margin-top: 8px;
 }
 
 .inline-edit {

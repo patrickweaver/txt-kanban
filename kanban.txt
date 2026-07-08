@@ -2,18 +2,24 @@
 
 ## To Do
 
-1. Allow editing .txt file directly
-    1. Updates to the .txt file via a text editor should be allowed. This should not cause a problem, even if the web app is open. The updates made directly should populate in the web app.
-2. Design tweaks
-    1. There is no visual space between a new card title being edited, and the card above it.
-3. Don't show and hide the "+note" button on hover
-    1. The +note button should always be visible unless there is already a note.
+1. Read file paths from local storage
+    1. Save the paths of recently opened kanban files in localstorage and suggest them on the start page. Clicking one of the paths opens it and bypasses the file picker.
+2. Deleted List
+    1. Add a ## Deleted list to the .txt file (or use the one that exists if it is already there). Cards that are removed with the 'x' button should be moved to the Deleted list. Cards should have a a deleted at timestamp appended to the title when moved to deleted so we can list them in a recently deleted list. Tabs at the top of the kanban board, "Board", and "Archive", and when Archive is clicked, toggle to an "Archive" mode that replaces the current lists with a single Archive list.
+3. Note should be a textarea
+    1. Notes are hard to edit when they get long, it should use <textarea>.
 
 ## In progress
 
 ## Done
 
 1. Create Repo
-2. Set up Claude Code
-3. Load file in web app
+2. Load file in web app
+3. Set up Claude Code
 4. Write to file from web app
+5. Allow editing .txt file directly
+    1. Updates to the .txt file via a text editor should be allowed. This should not cause a problem, even if the web app is open. The updates made directly should populate in the web app.
+6. Design tweaks
+    1. There is no visual space between a new card title being edited, and the card above it.
+7. Don't show and hide the "+note" button on hover
+    1. The +note button should always be visible unless there is already a note.

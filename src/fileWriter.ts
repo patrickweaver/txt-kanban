@@ -15,6 +15,8 @@ async function writeToHandle(handle: FileSystemFileHandle, text: string): Promis
 
 export interface FileWriter {
   save(text: string): void;
+  /** True while a write is in flight or queued. */
+  isBusy(): boolean;
 }
 
 /**
@@ -51,5 +53,6 @@ export function createFileWriter(
       pending = text;
       if (!writing) void drain();
     },
+    isBusy: () => writing || pending !== null,
   };
 }

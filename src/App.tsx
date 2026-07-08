@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import type { Board, SaveStatus } from "./types";
 import { parseBoard } from "./parser";
@@ -16,8 +16,49 @@ function App() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [openError, setOpenError] = useState<string | null>(null);
   const [writer, setWriter] = useState<FileWriter | null>(null);
+  const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
+  // The file text this app last loaded or wrote; polling compares against it
+  // so our own saves are not mistaken for external edits.
+  const lastTextRef = useRef<string | null>(null);
 
   const readOnly = board !== null && writer === null;
+
+  // The File System Access API has no change events, so poll the handle and
+  // reload the board when the file is edited externally (e.g. a text editor).
+  useEffect(() => {
+    if (!fileHandle) return;
+    let lastModified = 0;
+    let checking = false;
+    const id = setInterval(async () => {
+      if (checking) return;
+      // Skip while our own writes are queued; the file on disk lags the app.
+      if (writer?.isBusy()) return;
+      // Defer while the user is typing in an inline editor; a reload would
+      // discard their in-progress edit.
+      if (document.activeElement instanceof HTMLInputElement) return;
+      checking = true;
+      try {
+        const file = await fileHandle.getFile();
+        if (file.lastModified !== lastModified) {
+          const text = await file.text();
+          // A save may have started while we were reading; its content will
+          // land shortly, so don't treat the stale read as an external edit.
+          if (writer?.isBusy()) return;
+          lastModified = file.lastModified;
+          if (text !== lastTextRef.current) {
+            lastTextRef.current = text;
+            load(parseBoard(text));
+          }
+        }
+      } catch {
+        // File temporarily unreadable (e.g. mid-save in the editor); retry
+        // on the next tick.
+      } finally {
+        checking = false;
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [fileHandle, writer, load]);
 
   async function openFile(): Promise<void> {
     try {
@@ -28,9 +69,11 @@ function App() {
       const file = await handle.getFile();
       const text = await file.text();
       setWriter(createFileWriter(handle, setSaveStatus));
+      setFileHandle(handle);
       setFileName(handle.name);
       setSaveStatus("idle");
       setOpenError(null);
+      lastTextRef.current = text;
       load(parseBoard(text));
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -43,14 +86,19 @@ function App() {
     if (!file) return;
     const text = await file.text();
     setWriter(null);
+    setFileHandle(null);
     setFileName(file.name);
     setSaveStatus("idle");
     setOpenError(null);
+    lastTextRef.current = text;
     load(parseBoard(text));
   }
 
   function save(next: Board): void {
-    writer?.save(serializeBoard(next));
+    if (!writer) return;
+    const text = serializeBoard(next);
+    lastTextRef.current = text;
+    writer.save(text);
   }
 
   function retrySave(): void {

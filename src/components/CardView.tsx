@@ -132,7 +132,7 @@ function CardView({
           )}
         </ul>
       )}
-      {!readOnly && !overlay && editing !== "new-note" && (
+      {!readOnly && !overlay && card.description.length === 0 && editing !== "new-note" && (
         <button className="card-add-note" onClick={() => setEditing("new-note")}>
           + note
         </button>
