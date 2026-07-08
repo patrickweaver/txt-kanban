@@ -5,6 +5,10 @@
 1. Load file in web app
 2. Write to file from web app
 
+## In progress
+
+
 ## Done
 
 1. Create Repo
+2. Set up Claude Code
