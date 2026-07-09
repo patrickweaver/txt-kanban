@@ -126,11 +126,31 @@ export function isArchiveColumn(column: Column): boolean {
   return name === "archived" || name === "deleted";
 }
 
-export function formatDeletedAt(date: Date): string {
+/** Local-time `YYYY-MM-DD HH:MM`. */
+export function formatDateTime(date: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())} ${p(
     date.getHours()
   )}:${p(date.getMinutes())}`;
+}
+
+export function formatDeletedAt(date: Date): string {
+  return formatDateTime(date);
+}
+
+/**
+ * Epoch ms from a card's `Date:` value. A bare integer is read as epoch
+ * milliseconds; anything else is passed to `Date.parse` (ISO strings,
+ * `YYYY-MM-DD`, etc.). null when the value can't be parsed.
+ */
+export function parseCardDate(value: string): number | null {
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) {
+    const ms = Number(trimmed);
+    return Number.isFinite(ms) ? ms : null;
+  }
+  const ms = Date.parse(trimmed);
+  return Number.isNaN(ms) ? null : ms;
 }
 
 /** Epoch ms of the card's deleted-at title suffix; 0 when absent/unparseable. */

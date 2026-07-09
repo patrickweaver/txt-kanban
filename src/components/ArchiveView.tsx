@@ -1,5 +1,5 @@
 import type { Board } from "../types";
-import { deletedAtOf, isArchiveColumn } from "../boardOps";
+import { deletedAtOf, formatDateTime, isArchiveColumn, parseCardDate } from "../boardOps";
 
 interface ArchiveViewProps {
   board: Board;
@@ -22,7 +22,9 @@ function ArchiveView({ board, readOnly, onRestore }: ArchiveViewProps) {
           <p className="board-empty">No archived cards.</p>
         ) : (
           <div className="column-cards">
-            {cards.map((card) => (
+            {cards.map((card) => {
+              const cardDate = card.date !== null ? parseCardDate(card.date) : null;
+              return (
               <div key={card.id} className="card archive-card">
                 <div className="card-header">
                   <span className="card-title">{card.title}</span>
@@ -36,6 +38,9 @@ function ArchiveView({ board, readOnly, onRestore }: ArchiveViewProps) {
                     </button>
                   )}
                 </div>
+                {cardDate !== null && (
+                  <div className="card-date">{formatDateTime(new Date(cardDate))}</div>
+                )}
                 {card.description.length > 0 && (
                   <ul className="card-description">
                     {card.description.map((line, i) => (
@@ -62,7 +67,8 @@ function ArchiveView({ board, readOnly, onRestore }: ArchiveViewProps) {
                   </ul>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

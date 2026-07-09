@@ -9,6 +9,8 @@ interface ColumnViewProps {
   readOnly: boolean;
   /** Disables card dragging (e.g. while a tag filter is active). */
   dragDisabled?: boolean;
+  /** Card that should open its description editor once (just added). */
+  autoEditCardId?: string | null;
   onCardTitleChange: (cardId: string, title: string) => void;
   onCardDescriptionChange: (cardId: string, index: number, lines: string[]) => void;
   onCardDescriptionAdd: (cardId: string, lines: string[]) => void;
@@ -17,6 +19,7 @@ interface ColumnViewProps {
   onCardTagAdd: (cardId: string, tag: string) => void;
   onCardTagUpdate: (cardId: string, index: number, tag: string) => void;
   onCardTagRemove: (cardId: string, index: number) => void;
+  onAutoEditConsumed: () => void;
 }
 
 interface ComposerProps {
@@ -43,8 +46,8 @@ function Composer({ onAdd, onClose }: ComposerProps) {
       onChange={(e) => setText(e.target.value)}
       onBlur={() => commit(true)}
       onKeyDown={(e) => {
-        // Enter commits and keeps the composer open for rapid entry.
-        if (e.key === "Enter") commit(false);
+        // Enter commits and closes so focus flows into the new card's editor.
+        if (e.key === "Enter") commit(true);
         if (e.key === "Escape") {
           setText("");
           onClose();
@@ -58,6 +61,7 @@ function ColumnView({
   column,
   readOnly,
   dragDisabled,
+  autoEditCardId,
   onCardTitleChange,
   onCardDescriptionChange,
   onCardDescriptionAdd,
@@ -66,6 +70,7 @@ function ColumnView({
   onCardTagAdd,
   onCardTagUpdate,
   onCardTagRemove,
+  onAutoEditConsumed,
 }: ColumnViewProps) {
   const [composing, setComposing] = useState(false);
   // Droppable on the card list keeps empty columns valid drop targets.
@@ -85,6 +90,7 @@ function ColumnView({
               card={card}
               readOnly={readOnly}
               dragDisabled={dragDisabled}
+              autoEdit={autoEditCardId === card.id}
               onTitleChange={(title) => onCardTitleChange(card.id, title)}
               onDescriptionChange={(i, lines) => onCardDescriptionChange(card.id, i, lines)}
               onDescriptionAdd={(lines) => onCardDescriptionAdd(card.id, lines)}
@@ -92,6 +98,7 @@ function ColumnView({
               onTagAdd={(tag) => onCardTagAdd(card.id, tag)}
               onTagUpdate={(i, tag) => onCardTagUpdate(card.id, i, tag)}
               onTagRemove={(i) => onCardTagRemove(card.id, i)}
+              onAutoEditConsumed={onAutoEditConsumed}
             />
           ))}
         </div>

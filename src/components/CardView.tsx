@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card } from "../types";
+import { formatDateTime, parseCardDate } from "../boardOps";
 import TagModal from "./TagModal";
 
 interface CardViewProps {
@@ -11,6 +12,8 @@ interface CardViewProps {
   overlay?: boolean;
   /** Disables drag (e.g. while a tag filter is active) without disabling editing. */
   dragDisabled?: boolean;
+  /** Just added via the composer: open its description editor once. */
+  autoEdit?: boolean;
   onTitleChange?: (title: string) => void;
   onDescriptionChange?: (index: number, lines: string[]) => void;
   onDescriptionAdd?: (lines: string[]) => void;
@@ -18,6 +21,7 @@ interface CardViewProps {
   onTagAdd?: (tag: string) => void;
   onTagUpdate?: (index: number, tag: string) => void;
   onTagRemove?: (index: number) => void;
+  onAutoEditConsumed?: () => void;
 }
 
 interface InlineEditProps {
@@ -137,6 +141,7 @@ function CardView({
   readOnly,
   overlay = false,
   dragDisabled = false,
+  autoEdit = false,
   onTitleChange,
   onDescriptionChange,
   onDescriptionAdd,
@@ -144,11 +149,24 @@ function CardView({
   onTagAdd,
   onTagUpdate,
   onTagRemove,
+  onAutoEditConsumed,
 }: CardViewProps) {
   // "title" | description index | "new-note" | "new-tag" | null
   const [editing, setEditing] = useState<"title" | "new-note" | "new-tag" | number | null>(null);
   // Index of the tag whose edit/remove modal is open, or null.
   const [tagModal, setTagModal] = useState<number | null>(null);
+
+  // A card just added via the composer opens its description editor once, so
+  // Enter on the title flows straight into writing the description.
+  useEffect(() => {
+    if (autoEdit) {
+      setEditing("new-note");
+      onAutoEditConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoEdit]);
+
+  const cardDate = card.date !== null ? parseCardDate(card.date) : null;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
@@ -189,6 +207,9 @@ function CardView({
           </button>
         )}
       </div>
+      {cardDate !== null && (
+        <div className="card-date">{formatDateTime(new Date(cardDate))}</div>
+      )}
       {(card.description.length > 0 || editing === "new-note") && (
         <ul className="card-description">
           {card.description.map((line, i) =>
@@ -224,7 +245,7 @@ function CardView({
       )}
       {!readOnly && !overlay && card.description.length === 0 && editing !== "new-note" && (
         <button className="card-add-note" onClick={() => setEditing("new-note")}>
-          + note
+          + description
         </button>
       )}
       {(card.tags.length > 0 || (!readOnly && !overlay)) && (

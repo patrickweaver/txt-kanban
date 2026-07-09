@@ -44,6 +44,7 @@ interface BoardViewProps {
 function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [autoEditCardId, setAutoEditCardId] = useState<string | null>(null);
   const preDragBoard = useRef<Board | null>(null);
 
   const sensors = useSensors(
@@ -182,6 +183,8 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
             column={column}
             readOnly={readOnly}
             dragDisabled={filterKey !== null}
+            autoEditCardId={autoEditCardId}
+            onAutoEditConsumed={() => setAutoEditCardId(null)}
             onCardTitleChange={(cardId, title) =>
               commit((b) => updateCardTitle(b, cardId, title))
             }
@@ -194,17 +197,20 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
             onCardArchive={(cardId) =>
               commit((b) => archiveCard(b, cardId, formatDeletedAt(new Date())))
             }
-            onCardAdd={(title) =>
+            onCardAdd={(title) => {
+              const id = crypto.randomUUID();
               commit((b) =>
                 addCard(b, column.id, {
-                  id: crypto.randomUUID(),
+                  id,
                   title,
                   description: [],
+                  date: new Date().toISOString(),
                   tags: [],
                   unknownProps: [],
                 })
-              )
-            }
+              );
+              setAutoEditCardId(id);
+            }}
             onCardTagAdd={(cardId, tag) => commit((b) => addTag(b, cardId, tag))}
             onCardTagUpdate={(cardId, i, tag) => commit((b) => updateTag(b, cardId, i, tag))}
             onCardTagRemove={(cardId, i) => commit((b) => removeTag(b, cardId, i))}

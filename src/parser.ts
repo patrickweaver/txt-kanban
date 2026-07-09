@@ -9,6 +9,7 @@ import type { Board, Card, Column } from "./types";
 // - A list item indented by at least one space or tab is a property of the
 //   most recent card, whatever the indent depth. Properties are `Title: value`:
 //     * `Description:` appends a description line.
+//     * `Date:` sets the card's date (kept verbatim; last one wins).
 //     * `Tags:` appends comma-separated tags.
 //     * any other single-token title is kept as an "unknown property".
 //   An indented item that isn't `Title: value` (no single-word title before a
@@ -53,6 +54,7 @@ export function parseBoard(text: string): Board {
         id: crypto.randomUUID(),
         title: content,
         description: [],
+        date: null,
         tags: [],
         unknownProps: [],
       };
@@ -67,6 +69,8 @@ export function parseBoard(text: string): Board {
       const key = title.toLowerCase();
       if (key === "description") {
         currentCard.description.push(value);
+      } else if (key === "date") {
+        currentCard.date = value;
       } else if (key === "tags") {
         for (const tag of value.split(",").map((t) => t.trim()).filter(Boolean)) {
           currentCard.tags.push(tag);

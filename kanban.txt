@@ -2,6 +2,10 @@
 
 ## To Do
 
+1. Testing new cards
+    - Description: now I can write a description
+    - Date: 2026-07-09T05:15:50.035Z
+
 ## In progress
 
 ## Done
@@ -45,6 +49,18 @@
 18. Update the readme with the tagging system
     - Description: Documented the tagging system (add/edit/remove, filter bar, unknown-property errors) and refreshed the file-format section for the new property DSL.
     - Tags: documentation
+19. Add date metadata
+    - Description: When a card is created in the UI, add a list item to the sublist with the title "Date" and an ISO timestamp. If a card is added by editing the file, allow any date format that is parsable by JavaScript. Added a known "Date" property; UI-created cards get an ISO timestamp, file-edited dates accept epoch ms or any Date.parse-able string, and the raw value is preserved on save.
+    - Date: 1783572015618
+    - Tags: dates
+20. Render Date on card
+    - Description: If a card has a date field, show it below the title of the card in the format YYYY-MM-DD HH:MM.
+    - Tags: dates
+21. Keyboard navigation: New Cards
+    - Description: Hitting enter after writing the title on a new card should automatically open the "Note"/"Description" textarea for editing. The composer now closes on Enter and the new card auto-opens its focused description editor.
+    - Tags: keyboard
+22. Rename "Note" in UI
+    - Description: Rename "Note" to "Description" in UI to match the .txt format. The card button now reads "+ description".
 
 ## Archived
 
