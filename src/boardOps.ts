@@ -75,6 +75,18 @@ export function removeTag(board: Board, cardId: string, index: number): Board {
   });
 }
 
+export function addColumn(board: Board, name: string): Board {
+  const trimmed = name.trim();
+  if (trimmed === "") return board;
+  const column: Column = { id: crypto.randomUUID(), name: trimmed, cards: [] };
+  // Keep any archive column last so it stays at the bottom of the file.
+  const archiveIndex = board.columns.findIndex(isArchiveColumn);
+  const columns = [...board.columns];
+  if (archiveIndex === -1) columns.push(column);
+  else columns.splice(archiveIndex, 0, column);
+  return { ...board, columns };
+}
+
 export function addCard(board: Board, columnId: string, card: Card): Board {
   return {
     ...board,

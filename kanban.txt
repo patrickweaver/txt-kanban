@@ -2,9 +2,15 @@
 
 ## To Do
 
-1. Testing new cards
-    - Description: now I can write a description
-    - Date: 2026-07-09T05:15:50.035Z
+1. Non fixed width layout
+    - Description: The board layout should take the full browser width
+    - Date: 2026-07-09T05:32:53.181Z
+2. Column width: 300px
+    - Description: Columns should always be 300px wide and should not grow with the space allotted. If there is only one column it should be left aligned.
+    - Date: 2026-07-09T05:33:16.045Z
+3. Rearrange columns
+    - Description: Columns should be drag and drop to reorder them in the UI and in the file.
+    - Date: 2026-07-09T05:34:11.721Z
 
 ## In progress
 
@@ -61,6 +67,10 @@
     - Tags: keyboard
 22. Rename "Note" in UI
     - Description: Rename "Note" to "Description" in UI to match the .txt format. The card button now reads "+ description".
+23. Boostrap new file
+    - Description: Starting with an empty file I am not able to create new columns. Add a "+Column" button at the top with the Board/Archive tabs. When the button is clicked, open a modal with "Cancel" and "Save" buttons. Added a "+ Column" header button and a ColumnModal (name input + Cancel/Save); new columns are inserted before any archive column and the view switches to Board.
+    - Date: 2026-07-09T05:15:50.035Z
+    - Tags: getting-started
 
 ## Archived
 

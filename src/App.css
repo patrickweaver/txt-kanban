@@ -138,6 +138,23 @@
     border-color: var(--accent-border);
   }
 
+  .add-column {
+    font: inherit;
+    font-size: 14px;
+    white-space: nowrap;
+    color: var(--text);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 12px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-h);
+      border-color: var(--accent-border);
+    }
+  }
+
   .save-status {
     font-size: 14px;
     margin-left: auto;
@@ -510,6 +527,22 @@ textarea.inline-edit {
 
 .modal-remove:hover {
   background: var(--accent-bg);
+}
+
+.modal-cancel {
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.modal-cancel:hover {
+  color: var(--text-h);
+  border-color: var(--accent-border);
 }
 
 .modal-save {

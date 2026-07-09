@@ -5,12 +5,13 @@ import { parseBoard } from "./parser";
 import { serializeBoard } from "./serializer";
 import { createFileWriter } from "./fileWriter";
 import type { FileWriter } from "./fileWriter";
-import { restoreCard } from "./boardOps";
+import { addColumn, restoreCard } from "./boardOps";
 import { forgetFile, listRecentFiles, rememberFile } from "./recentFiles";
 import type { RecentFile } from "./recentFiles";
 import { useBoard } from "./useBoard";
 import BoardView from "./components/BoardView";
 import ArchiveView from "./components/ArchiveView";
+import ColumnModal from "./components/ColumnModal";
 
 function relativeTime(ms: number): string {
   const mins = Math.round((Date.now() - ms) / 60000);
@@ -42,6 +43,7 @@ function App() {
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [recents, setRecents] = useState<RecentFile[]>([]);
   const [view, setView] = useState<"board" | "archive">("board");
+  const [columnModalOpen, setColumnModalOpen] = useState(false);
   // The file text this app last loaded or wrote; polling compares against it
   // so our own saves are not mistaken for external edits.
   const lastTextRef = useRef<string | null>(null);
@@ -226,6 +228,11 @@ function App() {
             Archive
           </button>
         </nav>
+        {!readOnly && (
+          <button className="add-column" onClick={() => setColumnModalOpen(true)}>
+            + Column
+          </button>
+        )}
         {readOnly ? (
           <span className="save-status">
             Read-only — editing and saving require Chrome or Edge
@@ -262,6 +269,16 @@ function App() {
           apply={apply}
           restore={restore}
           save={save}
+        />
+      )}
+      {columnModalOpen && (
+        <ColumnModal
+          onSave={(name) => {
+            save(apply((b) => addColumn(b, name)));
+            setColumnModalOpen(false);
+            setView("board");
+          }}
+          onClose={() => setColumnModalOpen(false)}
         />
       )}
     </main>

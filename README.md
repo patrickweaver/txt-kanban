@@ -133,6 +133,7 @@ src/
     ColumnView.tsx   A single column and its add-card control
     CardView.tsx     A card: title, notes, tags, and inline editing
     TagModal.tsx     Edit/remove a single tag (portaled dialog)
+    ColumnModal.tsx  Name and create a new column (portaled dialog)
     ArchiveView.tsx  The archived-cards list
 ```
 
