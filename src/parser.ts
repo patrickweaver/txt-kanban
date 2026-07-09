@@ -6,13 +6,21 @@ import type { Board, Card, Column } from "./types";
 // - `## ` starts a column. `###` and deeper headings are not part of the DSL.
 // - Cards accept `1.`, `1)`, `-`, and `*` markers. Numbers are discarded:
 //   order in the file is the order on the board.
-// - A list item indented by at least one space or tab is a description line
-//   of the most recent card, whatever the indent depth.
-// - Blank lines are skipped and do not detach a card from later descriptions.
+// - A list item indented by at least one space or tab is a property of the
+//   most recent card, whatever the indent depth. Properties are `Title: value`:
+//     * `Description:` appends a description line.
+//     * `Tags:` appends comma-separated tags.
+//     * any other single-token title is kept as an "unknown property".
+//   An indented item that isn't `Title: value` (no single-word title before a
+//   colon) is treated as a plain description line, so older files and prose
+//   descriptions that merely contain a colon still parse.
+// - Blank lines are skipped and do not detach a card from later properties.
 // - Cards before the first `## ` and anything unrecognized are ignored.
 //   The parser never throws.
 
 const LIST_ITEM = /^([ \t]*)(?:\d+[.)]|[-*])[ \t]+(.*)$/;
+// A property title is a single token (no whitespace) before the first colon.
+const PROPERTY = /^([A-Za-z][\w-]*):[ \t]*(.*)$/;
 
 export function parseBoard(text: string): Board {
   const board: Board = { title: null, columns: [] };
@@ -41,10 +49,31 @@ export function parseBoard(text: string): Board {
 
     if (indent === "") {
       if (!currentColumn) continue;
-      currentCard = { id: crypto.randomUUID(), title: content, description: [] };
+      currentCard = {
+        id: crypto.randomUUID(),
+        title: content,
+        description: [],
+        tags: [],
+        unknownProps: [],
+      };
       currentColumn.cards.push(currentCard);
-    } else {
-      currentCard?.description.push(content);
+    } else if (currentCard) {
+      const prop = PROPERTY.exec(content);
+      if (!prop) {
+        currentCard.description.push(content);
+        continue;
+      }
+      const [, title, value] = prop;
+      const key = title.toLowerCase();
+      if (key === "description") {
+        currentCard.description.push(value);
+      } else if (key === "tags") {
+        for (const tag of value.split(",").map((t) => t.trim()).filter(Boolean)) {
+          currentCard.tags.push(tag);
+        }
+      } else {
+        currentCard.unknownProps.push({ title, value });
+      }
     }
   }
 

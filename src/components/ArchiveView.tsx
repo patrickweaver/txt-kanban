@@ -43,6 +43,24 @@ function ArchiveView({ board, readOnly, onRestore }: ArchiveViewProps) {
                     ))}
                   </ul>
                 )}
+                {card.tags.length > 0 && (
+                  <ul className="card-tags">
+                    {card.tags.map((tag, i) => (
+                      <li key={i} className="card-tag">
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {card.unknownProps.length > 0 && (
+                  <ul className="card-errors" role="alert">
+                    {card.unknownProps.map((prop, i) => (
+                      <li key={i} className="card-error">
+                        Unknown Property: {prop.title}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>

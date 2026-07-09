@@ -1,73 +1,122 @@
-# React + TypeScript + Vite
+# Kanban Txt
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A local-first Kanban board that reads and writes a plain `.txt` file. The file
+is meant to live in source control alongside the project it tracks, so your
+board is versioned with your code, diffs in pull requests, and is editable in
+any text editor — no database, no account, no server.
 
-Currently, two official plugins are available:
+The file is Markdown-ish: `##` headings are columns and list items are cards.
+It keeps the `.txt` extension on purpose, so the format stays free to grow its
+own conventions beyond standard Markdown. This repo's own `kanban.txt` is a
+working example.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## The file format
 
-## React Compiler
+```
+# Kanban
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## To Do
 
-## Expanding the ESLint configuration
+1. Load file in web app
+2. Write to file from web app
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## In progress
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Set up Claude Code
+    1. A description line — nested under its card.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Done
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Create Repo
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Mapping to the board:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `# ` — the board title (the first one wins; later `#` lines are ignored).
+- `## ` — a column. Cards that appear before the first `##` are ignored.
+- A top-level list item — a card title.
+- An indented list item — a description line on the card above it.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The parser is deliberately tolerant and never throws:
+
+- Line endings `\r\n`, `\r`, and `\n` are all accepted.
+- List markers `1.`, `1)`, `-`, and `*` are all treated as cards. The numbers
+  are cosmetic — order in the file is the order on the board.
+- Any indent (space or tab, any depth) makes a list item a description line.
+- Blank lines and unrecognized lines (including `###` and deeper headings) are
+  skipped.
+
+When the app saves, it re-emits a canonical form: cards renumbered `1., 2., …`,
+description lines as 4-space-indented numbered items, one blank line between
+blocks, and a trailing newline. Parsing then re-serializing a board is a
+round-trip (identical modulo internal ids), so hand-edits and app edits
+converge on the same clean layout.
+
+## How it works
+
+- **Read/write the real file.** In Chromium browsers the app uses the
+  [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API)
+  to open your `.txt` and write edits straight back to disk. Writes go through
+  a swap file that atomically replaces the target.
+- **Auto-save.** Every edit is serialized and written immediately. Concurrent
+  saves collapse to the newest text (latest wins). The header shows the status
+  and the clock time of the last successful save.
+- **External edits sync back.** With no change events on the file handle, the
+  app polls the file about once a second and reloads the board when the file
+  changes on disk — so editing the `.txt` in your editor updates the open app.
+  Polling stands down while you're typing in an inline editor or while the
+  app's own write is in flight, so nothing clobbers an in-progress edit.
+- **Recent files.** `FileSystemFileHandle`s can't go in `localStorage` but are
+  structured-cloneable into IndexedDB, so recently opened files are remembered
+  (up to 8) and offered on the start screen. Reopening one skips the picker
+  after a permission re-prompt.
+- **Archive instead of delete.** The `×` on a card moves it to an `Archived`
+  column with a `(deleted YYYY-MM-DD HH:MM)` timestamp appended to its title,
+  rather than dropping it. The **Archive** tab lists archived cards
+  newest-first and can restore them (the timestamp is stripped on restore). An
+  older `Deleted` column name is still recognized for backward compatibility.
+- **Drag, drop, and inline edit.** Cards drag within and between columns
+  (pointer or keyboard, via [@dnd-kit](https://dndkit.com)). Click a title or a
+  note to edit in place; notes are auto-growing textareas. Enter commits,
+  Shift+Enter adds a line, Escape cancels.
+
+### Browser support
+
+Reading, editing, and saving need the File System Access API, available in
+Chrome and Edge. Other browsers (Firefox, Safari) fall back to a file input
+that loads a board **read-only** — you can view it but not save changes.
+
+## Project structure
+
 ```
+src/
+  App.tsx            App shell: open/pick files, save status, Board/Archive tabs, external-edit polling
+  useBoard.ts        Board state hook (current board + ref + apply/load helpers)
+  parser.ts          .txt  -> Board
+  serializer.ts      Board -> .txt (canonical form)
+  boardOps.ts        Pure Board -> Board operations (move, edit, archive, restore, …)
+  fileWriter.ts      Serialized, latest-wins writes to a file handle + save status
+  recentFiles.ts     IndexedDB-backed recent files
+  types.ts           Board / Column / Card / SaveStatus types
+  file-system-access.d.ts  Type declarations for the File System Access API
+  components/
+    BoardView.tsx    The columns, drag-and-drop wiring
+    ColumnView.tsx   A single column and its add-card control
+    CardView.tsx     A card, its notes, and inline editing
+    ArchiveView.tsx  The archived-cards list
+```
+
+## Development
+
+The app is [Vite](https://vite.dev) + React + TypeScript.
+
+```bash
+npm install      # install dependencies
+npm run dev      # start the dev server with HMR
+npm run build    # type-check (tsc -b) and build for production
+npm run preview  # serve the production build locally
+npm run lint     # run ESLint
+```
+
+Then open the dev server URL, click **Open kanban file**, and pick a `.txt`
+(try this repo's `kanban.txt`).

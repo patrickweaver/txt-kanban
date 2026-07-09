@@ -10,7 +10,10 @@ The .txt file has the structure seen in this example:
 ## To Do
 
 1. Load file in web app
+    - Tags: filesystem
 2. Write to file from web app
+    - Description: When changes are made in the web app, update the local .txt file.
+    - Tags: filesystem, updates
 
 ## In progress
 

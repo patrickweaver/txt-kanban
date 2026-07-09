@@ -139,6 +139,8 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
                   id: crypto.randomUUID(),
                   title,
                   description: [],
+                  tags: [],
+                  unknownProps: [],
                 })
               )
             }
