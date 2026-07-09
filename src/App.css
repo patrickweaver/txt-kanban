@@ -35,6 +35,57 @@
   color: var(--accent);
 }
 
+.recent-files {
+  text-align: center;
+
+  h2 {
+    font-size: 16px;
+    letter-spacing: 0;
+    margin: 0 0 8px;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+.recent-file {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+
+  .recent-name {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text-h);
+  }
+
+  .recent-time {
+    margin-left: auto;
+    font-size: 13px;
+  }
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -58,6 +109,33 @@
   .file-name {
     font-family: var(--mono);
     font-size: 14px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-left: 16px;
+  }
+
+  .tab {
+    font: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 3px 12px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-h);
+    }
+  }
+
+  .tab-active {
+    color: var(--accent);
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
   }
 
   .save-status {
@@ -219,6 +297,36 @@
 
   &:focus {
     outline: 1px solid var(--accent);
+  }
+}
+
+textarea.inline-edit {
+  display: block;
+  resize: none;
+  overflow: hidden;
+  line-height: inherit;
+}
+
+.archive-list {
+  flex: 0 1 480px;
+}
+
+.archive-card .card-title {
+  cursor: default;
+}
+
+.archive-restore {
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--accent-border);
+  border-radius: 4px;
+  padding: 1px 8px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--accent-bg);
   }
 }
 

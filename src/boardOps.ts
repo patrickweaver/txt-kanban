@@ -30,25 +30,24 @@ export function updateCardTitle(board: Board, cardId: string, title: string): Bo
   return mapCard(board, cardId, (card) => ({ ...card, title }));
 }
 
-/** Replaces the description line at `index`; an empty `text` deletes the line. */
+/** Replaces the description line at `index` with `lines`; empty `lines` deletes it. */
 export function updateDescriptionLine(
   board: Board,
   cardId: string,
   index: number,
-  text: string
+  lines: string[]
 ): Board {
   return mapCard(board, cardId, (card) => {
     const description = [...card.description];
-    if (text === "") description.splice(index, 1);
-    else description[index] = text;
+    description.splice(index, 1, ...lines);
     return { ...card, description };
   });
 }
 
-export function addDescriptionLine(board: Board, cardId: string, text: string): Board {
+export function addDescriptionLines(board: Board, cardId: string, lines: string[]): Board {
   return mapCard(board, cardId, (card) => ({
     ...card,
-    description: [...card.description, text],
+    description: [...card.description, ...lines],
   }));
 }
 
@@ -57,17 +56,6 @@ export function addCard(board: Board, columnId: string, card: Card): Board {
     ...board,
     columns: board.columns.map((col) =>
       col.id === columnId ? { ...col, cards: [...col.cards, card] } : col
-    ),
-  };
-}
-
-export function deleteCard(board: Board, cardId: string): Board {
-  return {
-    ...board,
-    columns: board.columns.map((col) =>
-      col.cards.some((c) => c.id === cardId)
-        ? { ...col, cards: col.cards.filter((c) => c.id !== cardId) }
-        : col
     ),
   };
 }
@@ -98,4 +86,81 @@ export function reorderCard(board: Board, cardId: string, toIndex: number): Boar
   const column = findColumnOfCard(board, cardId);
   if (!column) return board;
   return moveCardToColumn(board, cardId, column.id, toIndex);
+}
+
+// --- Archive ("Archived" column) ---
+
+const DELETED_AT_RE = /\s*\(deleted (\d{4}-\d{2}-\d{2} \d{2}:\d{2})\)\s*$/;
+
+/**
+ * The archive column holds removed cards and is hidden from the board view.
+ * New columns are created as "Archived"; "Deleted" is still recognized for
+ * files written before the rename.
+ */
+export function isArchiveColumn(column: Column): boolean {
+  const name = column.name.trim().toLowerCase();
+  return name === "archived" || name === "deleted";
+}
+
+export function formatDeletedAt(date: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())} ${p(
+    date.getHours()
+  )}:${p(date.getMinutes())}`;
+}
+
+/** Epoch ms of the card's deleted-at title suffix; 0 when absent/unparseable. */
+export function deletedAtOf(card: Card): number {
+  const match = DELETED_AT_RE.exec(card.title);
+  if (!match) return 0;
+  const parsed = Date.parse(match[1].replace(" ", "T"));
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Moves a card to the "Archived" column (created at the end of the board if
+ * missing), appending a deleted-at timestamp to its title.
+ */
+export function archiveCard(board: Board, cardId: string, deletedAt: string): Board {
+  const card = findCard(board, cardId);
+  if (!card) return board;
+  const archived: Card = { ...card, title: `${card.title} (deleted ${deletedAt})` };
+  const columns = board.columns.map((col) =>
+    col.cards.some((c) => c.id === cardId)
+      ? { ...col, cards: col.cards.filter((c) => c.id !== cardId) }
+      : col
+  );
+  const archiveColumn = columns.find(isArchiveColumn);
+  if (!archiveColumn) {
+    return {
+      ...board,
+      columns: [...columns, { id: crypto.randomUUID(), name: "Archived", cards: [archived] }],
+    };
+  }
+  return {
+    ...board,
+    columns: columns.map((col) =>
+      col === archiveColumn ? { ...col, cards: [...col.cards, archived] } : col
+    ),
+  };
+}
+
+/**
+ * Moves an archived card back to the first non-archive column, stripping the
+ * deleted-at suffix from its title.
+ */
+export function restoreCard(board: Board, cardId: string): Board {
+  const card = findCard(board, cardId);
+  const from = findColumnOfCard(board, cardId);
+  const target = board.columns.find((col) => !isArchiveColumn(col));
+  if (!card || !from || !isArchiveColumn(from) || !target) return board;
+  const restored: Card = { ...card, title: card.title.replace(DELETED_AT_RE, "") };
+  return {
+    ...board,
+    columns: board.columns.map((col) => {
+      if (col.id === from.id) return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
+      if (col.id === target.id) return { ...col, cards: [...col.cards, restored] };
+      return col;
+    }),
+  };
 }

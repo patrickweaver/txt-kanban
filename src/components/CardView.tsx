@@ -9,24 +9,65 @@ interface CardViewProps {
   /** Rendered inside the DragOverlay: no sortable wiring, no editing. */
   overlay?: boolean;
   onTitleChange?: (title: string) => void;
-  onDescriptionChange?: (index: number, text: string) => void;
-  onDescriptionAdd?: (text: string) => void;
-  onDelete?: () => void;
+  onDescriptionChange?: (index: number, lines: string[]) => void;
+  onDescriptionAdd?: (lines: string[]) => void;
+  onArchive?: () => void;
 }
 
 interface InlineEditProps {
   value: string;
   onCommit: (value: string) => void;
   onClose: () => void;
+  /** Textarea with soft wrapping; Enter commits, Shift+Enter inserts a newline. */
+  multiline?: boolean;
 }
 
-function InlineEdit({ value, onCommit, onClose }: InlineEditProps) {
+function autosize(el: HTMLTextAreaElement): void {
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
+function InlineEdit({ value, onCommit, onClose, multiline = false }: InlineEditProps) {
   const [text, setText] = useState(value);
   const cancelled = useRef(false);
 
   function commit(): void {
     if (!cancelled.current && text.trim() !== value) onCommit(text.trim());
     onClose();
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>): void {
+    // Commit directly rather than via blur(); unmounting on close means
+    // no blur event follows, so this cannot double-commit.
+    if (e.key === "Enter" && !(multiline && e.shiftKey)) {
+      e.preventDefault();
+      commit();
+    }
+    if (e.key === "Escape") {
+      cancelled.current = true;
+      onClose();
+    }
+  }
+
+  if (multiline) {
+    return (
+      <textarea
+        className="inline-edit"
+        value={text}
+        rows={1}
+        autoFocus
+        ref={(el) => {
+          if (el) autosize(el);
+        }}
+        onFocus={(e) => e.target.select()}
+        onChange={(e) => {
+          setText(e.target.value);
+          autosize(e.target);
+        }}
+        onBlur={commit}
+        onKeyDown={handleKeyDown}
+      />
+    );
   }
 
   return (
@@ -37,17 +78,17 @@ function InlineEdit({ value, onCommit, onClose }: InlineEditProps) {
       onFocus={(e) => e.target.select()}
       onChange={(e) => setText(e.target.value)}
       onBlur={commit}
-      onKeyDown={(e) => {
-        // Commit directly rather than via blur(); unmounting on close means
-        // no blur event follows, so this cannot double-commit.
-        if (e.key === "Enter") commit();
-        if (e.key === "Escape") {
-          cancelled.current = true;
-          onClose();
-        }
-      }}
+      onKeyDown={handleKeyDown}
     />
   );
+}
+
+/** One nested list item per line; blank lines are dropped. */
+function toNoteLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
 }
 
 function CardView({
@@ -57,7 +98,7 @@ function CardView({
   onTitleChange,
   onDescriptionChange,
   onDescriptionAdd,
-  onDelete,
+  onArchive,
 }: CardViewProps) {
   // "title" | description index | "new-note" | null
   const [editing, setEditing] = useState<"title" | "new-note" | number | null>(null);
@@ -96,7 +137,7 @@ function CardView({
           </span>
         )}
         {!readOnly && !overlay && (
-          <button className="card-delete" title="Delete card" onClick={onDelete}>
+          <button className="card-delete" title="Delete card" onClick={onArchive}>
             ×
           </button>
         )}
@@ -107,8 +148,9 @@ function CardView({
             editing === i ? (
               <li key={i}>
                 <InlineEdit
+                  multiline
                   value={line}
-                  onCommit={(text) => onDescriptionChange?.(i, text)}
+                  onCommit={(text) => onDescriptionChange?.(i, toNoteLines(text))}
                   onClose={() => setEditing(null)}
                 />
               </li>
@@ -124,8 +166,9 @@ function CardView({
           {editing === "new-note" && (
             <li>
               <InlineEdit
+                multiline
                 value=""
-                onCommit={(text) => text !== "" && onDescriptionAdd?.(text)}
+                onCommit={(text) => onDescriptionAdd?.(toNoteLines(text))}
                 onClose={() => setEditing(null)}
               />
             </li>

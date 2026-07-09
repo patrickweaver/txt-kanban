@@ -8,9 +8,9 @@ interface ColumnViewProps {
   column: Column;
   readOnly: boolean;
   onCardTitleChange: (cardId: string, title: string) => void;
-  onCardDescriptionChange: (cardId: string, index: number, text: string) => void;
-  onCardDescriptionAdd: (cardId: string, text: string) => void;
-  onCardDelete: (cardId: string) => void;
+  onCardDescriptionChange: (cardId: string, index: number, lines: string[]) => void;
+  onCardDescriptionAdd: (cardId: string, lines: string[]) => void;
+  onCardArchive: (cardId: string) => void;
   onCardAdd: (title: string) => void;
 }
 
@@ -55,7 +55,7 @@ function ColumnView({
   onCardTitleChange,
   onCardDescriptionChange,
   onCardDescriptionAdd,
-  onCardDelete,
+  onCardArchive,
   onCardAdd,
 }: ColumnViewProps) {
   const [composing, setComposing] = useState(false);
@@ -76,9 +76,9 @@ function ColumnView({
               card={card}
               readOnly={readOnly}
               onTitleChange={(title) => onCardTitleChange(card.id, title)}
-              onDescriptionChange={(i, text) => onCardDescriptionChange(card.id, i, text)}
-              onDescriptionAdd={(text) => onCardDescriptionAdd(card.id, text)}
-              onDelete={() => onCardDelete(card.id)}
+              onDescriptionChange={(i, lines) => onCardDescriptionChange(card.id, i, lines)}
+              onDescriptionAdd={(lines) => onCardDescriptionAdd(card.id, lines)}
+              onArchive={() => onCardArchive(card.id)}
             />
           ))}
         </div>

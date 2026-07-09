@@ -14,10 +14,12 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { Board, Card } from "../types";
 import {
   addCard,
-  addDescriptionLine,
-  deleteCard,
+  addDescriptionLines,
+  archiveCard,
   findCard,
   findColumnOfCard,
+  formatDeletedAt,
+  isArchiveColumn,
   moveCardToColumn,
   reorderCard,
   updateCardTitle,
@@ -114,7 +116,7 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
       onDragCancel={handleDragCancel}
     >
       <div className="board">
-        {board.columns.map((column) => (
+        {board.columns.filter((column) => !isArchiveColumn(column)).map((column) => (
           <ColumnView
             key={column.id}
             column={column}
@@ -122,13 +124,15 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
             onCardTitleChange={(cardId, title) =>
               commit((b) => updateCardTitle(b, cardId, title))
             }
-            onCardDescriptionChange={(cardId, i, text) =>
-              commit((b) => updateDescriptionLine(b, cardId, i, text))
+            onCardDescriptionChange={(cardId, i, lines) =>
+              commit((b) => updateDescriptionLine(b, cardId, i, lines))
             }
-            onCardDescriptionAdd={(cardId, text) =>
-              commit((b) => addDescriptionLine(b, cardId, text))
+            onCardDescriptionAdd={(cardId, lines) =>
+              commit((b) => addDescriptionLines(b, cardId, lines))
             }
-            onCardDelete={(cardId) => commit((b) => deleteCard(b, cardId))}
+            onCardArchive={(cardId) =>
+              commit((b) => archiveCard(b, cardId, formatDeletedAt(new Date())))
+            }
             onCardAdd={(title) =>
               commit((b) =>
                 addCard(b, column.id, {
