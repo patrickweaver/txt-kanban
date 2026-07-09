@@ -7,11 +7,16 @@ import CardView from "./CardView";
 interface ColumnViewProps {
   column: Column;
   readOnly: boolean;
+  /** Disables card dragging (e.g. while a tag filter is active). */
+  dragDisabled?: boolean;
   onCardTitleChange: (cardId: string, title: string) => void;
   onCardDescriptionChange: (cardId: string, index: number, lines: string[]) => void;
   onCardDescriptionAdd: (cardId: string, lines: string[]) => void;
   onCardArchive: (cardId: string) => void;
   onCardAdd: (title: string) => void;
+  onCardTagAdd: (cardId: string, tag: string) => void;
+  onCardTagUpdate: (cardId: string, index: number, tag: string) => void;
+  onCardTagRemove: (cardId: string, index: number) => void;
 }
 
 interface ComposerProps {
@@ -52,11 +57,15 @@ function Composer({ onAdd, onClose }: ComposerProps) {
 function ColumnView({
   column,
   readOnly,
+  dragDisabled,
   onCardTitleChange,
   onCardDescriptionChange,
   onCardDescriptionAdd,
   onCardArchive,
   onCardAdd,
+  onCardTagAdd,
+  onCardTagUpdate,
+  onCardTagRemove,
 }: ColumnViewProps) {
   const [composing, setComposing] = useState(false);
   // Droppable on the card list keeps empty columns valid drop targets.
@@ -75,10 +84,14 @@ function ColumnView({
               key={card.id}
               card={card}
               readOnly={readOnly}
+              dragDisabled={dragDisabled}
               onTitleChange={(title) => onCardTitleChange(card.id, title)}
               onDescriptionChange={(i, lines) => onCardDescriptionChange(card.id, i, lines)}
               onDescriptionAdd={(lines) => onCardDescriptionAdd(card.id, lines)}
               onArchive={() => onCardArchive(card.id)}
+              onTagAdd={(tag) => onCardTagAdd(card.id, tag)}
+              onTagUpdate={(i, tag) => onCardTagUpdate(card.id, i, tag)}
+              onTagRemove={(i) => onCardTagRemove(card.id, i)}
             />
           ))}
         </div>

@@ -51,6 +51,30 @@ export function addDescriptionLines(board: Board, cardId: string, lines: string[
   }));
 }
 
+export function addTag(board: Board, cardId: string, tag: string): Board {
+  const value = tag.trim();
+  if (value === "") return board;
+  return mapCard(board, cardId, (card) => ({ ...card, tags: [...card.tags, value] }));
+}
+
+export function updateTag(board: Board, cardId: string, index: number, tag: string): Board {
+  const value = tag.trim();
+  if (value === "") return board;
+  return mapCard(board, cardId, (card) => {
+    if (index < 0 || index >= card.tags.length) return card;
+    const tags = [...card.tags];
+    tags[index] = value;
+    return { ...card, tags };
+  });
+}
+
+export function removeTag(board: Board, cardId: string, index: number): Board {
+  return mapCard(board, cardId, (card) => {
+    if (index < 0 || index >= card.tags.length) return card;
+    return { ...card, tags: card.tags.filter((_, i) => i !== index) };
+  });
+}
+
 export function addCard(board: Board, columnId: string, card: Card): Board {
   return {
     ...board,

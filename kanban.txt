@@ -2,25 +2,22 @@
 
 ## To Do
 
-1. Update tags in UI
-    - Description: The tags should be updatable in the UI. To add a new tag, click a "+ tag" button similar to the note button. To remove a tag click on it, which opens a modal. The modal has an editable text field with the tag value, and two buttons "Remove", "Save".
-    - Tags: tagging-system, feature
-2. Show all current tags in a filter bar at the top.
-    - Description: Between the header and the lists in the board, show a "Filter" section, which lists all tags (non case sensitive) that are currently on cards. Clicking on one of the tags filters the view to only cards with that tag.
-    - Tags: taggin-system, feature, filtering
-
 ## In progress
 
 ## Done
 
 1. Create Repo
 2. Load file in web app
+    - Tags: filesystem
 3. Set up Claude Code
 4. Write to file from web app
+    - Tags: filesystem
 5. Allow editing .txt file directly
     - Description: Updates to the .txt file via a text editor should be allowed. This should not cause a problem, even if the web app is open. The updates made directly should populate in the web app.
+    - Tags: filesystem
 6. Design tweaks
     - Description: There is no visual space between a new card title being edited, and the card above it.
+    - Tags: design
 7. Don't show and hide the "+note" button on hover
     - Description: The +note button should always be visible unless there is already a note.
 8. Read file paths from local storage
@@ -39,6 +36,15 @@
     - Description: If a card has a "tags" list item, render a list of tags. The design should be rectangles with slightly rounded corners, not pills. Don't use different colors for each tag because we can't preserve them across loads of the file.
 15. Alert on invalid titles
     - Description: If a card has a list item with a title that is not one of the known values, show an error message at the bottom, "Unknown Property: [TITLE]".
+16. Update tags in UI
+    - Description: The tags should be updatable in the UI. To add a new tag, click a "+ tag" button similar to the note button. To remove a tag click on it, which opens a modal. The modal has an editable text field with the tag value, and two buttons "Remove", "Save". Added a "+ tag" composer, clickable tag chips, and a portaled edit/remove modal wired through pure addTag/updateTag/removeTag ops.
+    - Tags: tagging-system, feature
+17. Show all current tags in a filter bar at the top.
+    - Description: Between the header and the lists in the board, show a "Filter" section, which lists all tags (non case sensitive) that are currently on cards. Clicking on one of the tags filters the view to only cards with that tag. Filter bar sits between header and columns; dragging is disabled while a filter is active and stale filters auto-clear.
+    - Tags: tagging-system, feature, filtering
+18. Update the readme with the tagging system
+    - Description: Documented the tagging system (add/edit/remove, filter bar, unknown-property errors) and refreshed the file-format section for the new property DSL.
+    - Tags: documentation
 
 ## Archived
 

@@ -15,15 +15,18 @@ import type { Board, Card } from "../types";
 import {
   addCard,
   addDescriptionLines,
+  addTag,
   archiveCard,
   findCard,
   findColumnOfCard,
   formatDeletedAt,
   isArchiveColumn,
   moveCardToColumn,
+  removeTag,
   reorderCard,
   updateCardTitle,
   updateDescriptionLine,
+  updateTag,
 } from "../boardOps";
 import ColumnView from "./ColumnView";
 import CardView from "./CardView";
@@ -40,6 +43,7 @@ interface BoardViewProps {
 
 function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
   const [activeCard, setActiveCard] = useState<Card | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const preDragBoard = useRef<Board | null>(null);
 
   const sensors = useSensors(
@@ -105,8 +109,64 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
     preDragBoard.current = null;
   }
 
+  const visibleColumns = board.columns.filter((column) => !isArchiveColumn(column));
+
+  // Every tag on a visible card, deduped case-insensitively with first-seen
+  // casing kept for display.
+  const allTags: string[] = [];
+  const seenTags = new Set<string>();
+  for (const column of visibleColumns) {
+    for (const card of column.cards) {
+      for (const tag of card.tags) {
+        const key = tag.toLowerCase();
+        if (!seenTags.has(key)) {
+          seenTags.add(key);
+          allTags.push(tag);
+        }
+      }
+    }
+  }
+
+  // Ignore a filter whose tag no longer exists (e.g. it was just removed).
+  const filterKey =
+    activeTag && seenTags.has(activeTag.toLowerCase()) ? activeTag.toLowerCase() : null;
+
+  const displayColumns = filterKey
+    ? visibleColumns.map((column) => ({
+        ...column,
+        cards: column.cards.filter((card) =>
+          card.tags.some((tag) => tag.toLowerCase() === filterKey)
+        ),
+      }))
+    : visibleColumns;
+
   return (
-    <DndContext
+    <>
+      {allTags.length > 0 && (
+        <div className="filter-bar">
+          <span className="filter-label">Filter</span>
+          {allTags.map((tag) => (
+            <button
+              key={tag.toLowerCase()}
+              type="button"
+              className={`filter-tag${filterKey === tag.toLowerCase() ? " filter-tag-active" : ""}`}
+              onClick={() =>
+                setActiveTag((current) =>
+                  current && current.toLowerCase() === tag.toLowerCase() ? null : tag
+                )
+              }
+            >
+              {tag}
+            </button>
+          ))}
+          {filterKey && (
+            <button type="button" className="filter-clear" onClick={() => setActiveTag(null)}>
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+      <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
       measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
@@ -116,11 +176,12 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
       onDragCancel={handleDragCancel}
     >
       <div className="board">
-        {board.columns.filter((column) => !isArchiveColumn(column)).map((column) => (
+        {displayColumns.map((column) => (
           <ColumnView
             key={column.id}
             column={column}
             readOnly={readOnly}
+            dragDisabled={filterKey !== null}
             onCardTitleChange={(cardId, title) =>
               commit((b) => updateCardTitle(b, cardId, title))
             }
@@ -144,13 +205,17 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
                 })
               )
             }
+            onCardTagAdd={(cardId, tag) => commit((b) => addTag(b, cardId, tag))}
+            onCardTagUpdate={(cardId, i, tag) => commit((b) => updateTag(b, cardId, i, tag))}
+            onCardTagRemove={(cardId, i) => commit((b) => removeTag(b, cardId, i))}
           />
         ))}
       </div>
       <DragOverlay>
         {activeCard && <CardView card={activeCard} readOnly overlay />}
       </DragOverlay>
-    </DndContext>
+      </DndContext>
+    </>
   );
 }
 

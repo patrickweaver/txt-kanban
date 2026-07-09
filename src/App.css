@@ -285,6 +285,7 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
 }
 
@@ -298,6 +299,38 @@
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px 6px;
+}
+
+/* A tag the user can click to edit/remove; same chip look, button behaviour. */
+.card-tag-button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.card-tag-button:hover {
+  color: var(--text-h);
+  border-color: var(--accent-border);
+}
+
+.card-add-tag {
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
+.card-add-tag:hover {
+  color: var(--text-h);
+  border-color: var(--accent-border);
+}
+
+.tag-input {
+  width: 90px;
+  font-size: 12px;
 }
 
 /* The add-card composer replaces the button below the card list; give it the
@@ -367,4 +400,121 @@ textarea.inline-edit {
 .card-error {
   font-size: 12px;
   color: var(--accent);
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: var(--text);
+  margin-right: 2px;
+}
+
+.filter-tag {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.filter-tag:hover {
+  color: var(--text-h);
+  border-color: var(--accent-border);
+}
+
+.filter-tag-active {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.filter-clear {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.filter-clear:hover {
+  color: var(--text-h);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-input {
+  width: 100%;
+  font-size: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.modal-remove,
+.modal-save {
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.modal-remove {
+  color: var(--accent);
+  background: none;
+}
+
+.modal-remove:hover {
+  background: var(--accent-bg);
+}
+
+.modal-save {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.modal-save:hover {
+  border-color: var(--accent);
+}
+
+.modal-save:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

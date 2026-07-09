@@ -2,16 +2,22 @@ import { useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card } from "../types";
+import TagModal from "./TagModal";
 
 interface CardViewProps {
   card: Card;
   readOnly: boolean;
   /** Rendered inside the DragOverlay: no sortable wiring, no editing. */
   overlay?: boolean;
+  /** Disables drag (e.g. while a tag filter is active) without disabling editing. */
+  dragDisabled?: boolean;
   onTitleChange?: (title: string) => void;
   onDescriptionChange?: (index: number, lines: string[]) => void;
   onDescriptionAdd?: (lines: string[]) => void;
   onArchive?: () => void;
+  onTagAdd?: (tag: string) => void;
+  onTagUpdate?: (index: number, tag: string) => void;
+  onTagRemove?: (index: number) => void;
 }
 
 interface InlineEditProps {
@@ -91,22 +97,63 @@ function toNoteLines(text: string): string[] {
     .filter((line) => line !== "");
 }
 
+interface TagComposerProps {
+  onAdd: (tag: string) => void;
+  onClose: () => void;
+}
+
+function TagComposer({ onAdd, onClose }: TagComposerProps) {
+  const [text, setText] = useState("");
+
+  function commit(close: boolean): void {
+    const tag = text.trim();
+    if (tag !== "") onAdd(tag);
+    setText("");
+    if (close || tag === "") onClose();
+  }
+
+  return (
+    <input
+      className="inline-edit tag-input"
+      value={text}
+      autoFocus
+      placeholder="Tag"
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() => commit(true)}
+      onKeyDown={(e) => {
+        // Enter commits and keeps the composer open for rapid entry.
+        if (e.key === "Enter") commit(false);
+        if (e.key === "Escape") {
+          setText("");
+          onClose();
+        }
+      }}
+    />
+  );
+}
+
 function CardView({
   card,
   readOnly,
   overlay = false,
+  dragDisabled = false,
   onTitleChange,
   onDescriptionChange,
   onDescriptionAdd,
   onArchive,
+  onTagAdd,
+  onTagUpdate,
+  onTagRemove,
 }: CardViewProps) {
-  // "title" | description index | "new-note" | null
-  const [editing, setEditing] = useState<"title" | "new-note" | number | null>(null);
+  // "title" | description index | "new-note" | "new-tag" | null
+  const [editing, setEditing] = useState<"title" | "new-note" | "new-tag" | number | null>(null);
+  // Index of the tag whose edit/remove modal is open, or null.
+  const [tagModal, setTagModal] = useState<number | null>(null);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
       id: card.id,
-      disabled: readOnly || overlay || editing !== null,
+      disabled: readOnly || overlay || dragDisabled || editing !== null,
     });
 
   const style = overlay
@@ -180,13 +227,39 @@ function CardView({
           + note
         </button>
       )}
-      {card.tags.length > 0 && (
+      {(card.tags.length > 0 || (!readOnly && !overlay)) && (
         <ul className="card-tags">
           {card.tags.map((tag, i) => (
-            <li key={i} className="card-tag">
-              {tag}
+            <li key={i}>
+              {readOnly || overlay ? (
+                <span className="card-tag">{tag}</span>
+              ) : (
+                <button
+                  type="button"
+                  className="card-tag card-tag-button"
+                  title="Edit tag"
+                  onClick={() => setTagModal(i)}
+                >
+                  {tag}
+                </button>
+              )}
             </li>
           ))}
+          {!readOnly && !overlay && (
+            <li>
+              {editing === "new-tag" ? (
+                <TagComposer onAdd={(tag) => onTagAdd?.(tag)} onClose={() => setEditing(null)} />
+              ) : (
+                <button
+                  type="button"
+                  className="card-add-tag"
+                  onClick={() => setEditing("new-tag")}
+                >
+                  + tag
+                </button>
+              )}
+            </li>
+          )}
         </ul>
       )}
       {card.unknownProps.length > 0 && (
@@ -197,6 +270,20 @@ function CardView({
             </li>
           ))}
         </ul>
+      )}
+      {tagModal !== null && card.tags[tagModal] !== undefined && (
+        <TagModal
+          value={card.tags[tagModal]}
+          onSave={(value) => {
+            onTagUpdate?.(tagModal, value);
+            setTagModal(null);
+          }}
+          onRemove={() => {
+            onTagRemove?.(tagModal);
+            setTagModal(null);
+          }}
+          onClose={() => setTagModal(null)}
+        />
       )}
     </div>
   );

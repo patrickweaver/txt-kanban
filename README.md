@@ -18,12 +18,14 @@ working example.
 ## To Do
 
 1. Load file in web app
+    - Tags: filesystem
 2. Write to file from web app
+    - Description: When changes are made in the web app, update the local .txt file.
+    - Tags: filesystem, updates
 
 ## In progress
 
 1. Set up Claude Code
-    1. A description line — nested under its card.
 
 ## Done
 
@@ -35,20 +37,27 @@ Mapping to the board:
 - `# ` — the board title (the first one wins; later `#` lines are ignored).
 - `## ` — a column. Cards that appear before the first `##` are ignored.
 - A top-level list item — a card title.
-- An indented list item — a description line on the card above it.
+- An indented list item — a `Title: value` **property** of the card above it.
+  Two titles are known: `Description:` adds a note line, and `Tags:` adds
+  comma-separated tags. Any other title is preserved but flagged in the UI as an
+  unknown property (see [Tags](#tags)).
 
 The parser is deliberately tolerant and never throws:
 
 - Line endings `\r\n`, `\r`, and `\n` are all accepted.
 - List markers `1.`, `1)`, `-`, and `*` are all treated as cards. The numbers
   are cosmetic — order in the file is the order on the board.
-- Any indent (space or tab, any depth) makes a list item a description line.
+- An indented item counts as a property only when it starts with a single-word
+  `Title:`. Anything else — including a colon-less line or prose that merely
+  contains a colon — is treated as a plain description line, so older files
+  still parse.
 - Blank lines and unrecognized lines (including `###` and deeper headings) are
   skipped.
 
-When the app saves, it re-emits a canonical form: cards renumbered `1., 2., …`,
-description lines as 4-space-indented numbered items, one blank line between
-blocks, and a trailing newline. Parsing then re-serializing a board is a
+When the app saves, it re-emits a canonical form: cards renumbered `1., 2., …`;
+each card's properties as 4-space-indented `- Description:` lines, then a single
+`- Tags:` line, then any preserved unknown properties; one blank line between
+blocks; and a trailing newline. Parsing then re-serializing a board is a
 round-trip (identical modulo internal ids), so hand-edits and app edits
 converge on the same clean layout.
 
@@ -80,6 +89,26 @@ converge on the same clean layout.
   note to edit in place; notes are auto-growing textareas. Enter commits,
   Shift+Enter adds a line, Escape cancels.
 
+### Tags
+
+Cards carry tags from a `- Tags:` property (comma-separated). They render as
+small neutral chips on the card — one uniform style, since per-tag colors
+couldn't be preserved in the `.txt`.
+
+- **Add** a tag with the `+ tag` button on a card; type and press Enter (the
+  composer stays open so you can add several in a row).
+- **Edit or remove** a tag by clicking it: a small modal opens with the tag's
+  text and **Save** / **Remove** buttons.
+- **Filter** the board with the **Filter** bar between the header and the
+  columns. It lists every tag currently in use (deduplicated case-insensitively);
+  click one to show only cards carrying it, and click it again — or **Clear** —
+  to reset. Dragging is disabled while a filter is active. All of this just
+  edits the `- Tags:` lines in the file.
+
+An indented property whose title isn't `Description` or `Tags` is kept in the
+file untouched but shown on the card as an `Unknown Property: <title>` error, so
+a typo surfaces instead of silently disappearing.
+
 ### Browser support
 
 Reading, editing, and saving need the File System Access API, available in
@@ -94,15 +123,16 @@ src/
   useBoard.ts        Board state hook (current board + ref + apply/load helpers)
   parser.ts          .txt  -> Board
   serializer.ts      Board -> .txt (canonical form)
-  boardOps.ts        Pure Board -> Board operations (move, edit, archive, restore, …)
+  boardOps.ts        Pure Board -> Board operations (move, edit, tag, archive, restore, …)
   fileWriter.ts      Serialized, latest-wins writes to a file handle + save status
   recentFiles.ts     IndexedDB-backed recent files
   types.ts           Board / Column / Card / SaveStatus types
   file-system-access.d.ts  Type declarations for the File System Access API
   components/
-    BoardView.tsx    The columns, drag-and-drop wiring
+    BoardView.tsx    The columns, drag-and-drop wiring, and tag filter bar
     ColumnView.tsx   A single column and its add-card control
-    CardView.tsx     A card, its notes, and inline editing
+    CardView.tsx     A card: title, notes, tags, and inline editing
+    TagModal.tsx     Edit/remove a single tag (portaled dialog)
     ArchiveView.tsx  The archived-cards list
 ```
 
