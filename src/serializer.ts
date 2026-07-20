@@ -1,9 +1,11 @@
 import type { Board } from "./types";
+import { encodeDescription } from "./description";
 
 // Canonical output format: `# Title` (omitted when null), one `## Name` block
 // per column, cards renumbered 1., 2., ... Each card's properties follow as
-// 4-space-indented `- Title: value` items in a fixed order: description lines,
-// a `Date:` line, a single `Tags:` line, then any preserved unknown properties.
+// 4-space-indented `- Title: value` items in a fixed order: a single
+// `Description:` line (newlines escaped as `\n`), a `Date:` line, a single
+// `Tags:` line, then any preserved unknown properties.
 // Blocks are separated by a single blank line and the file ends with one
 // newline.
 // Round-trip guarantee: parseBoard(serializeBoard(b)) equals b modulo ids.
@@ -17,7 +19,9 @@ export function serializeBoard(board: Board): string {
     blocks.push(`## ${column.name}`);
     const cardLines = column.cards.map((card, i) => {
       const lines = [`${i + 1}. ${card.title}`];
-      for (const line of card.description) lines.push(`    - Description: ${line}`);
+      if (card.description !== "") {
+        lines.push(`    - Description: ${encodeDescription(card.description)}`);
+      }
       if (card.date !== null) lines.push(`    - Date: ${card.date}`);
       if (card.tags.length > 0) lines.push(`    - Tags: ${card.tags.join(", ")}`);
       for (const prop of card.unknownProps) lines.push(`    - ${prop.title}: ${prop.value}`);

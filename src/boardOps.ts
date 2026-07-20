@@ -30,25 +30,9 @@ export function updateCardTitle(board: Board, cardId: string, title: string): Bo
   return mapCard(board, cardId, (card) => ({ ...card, title }));
 }
 
-/** Replaces the description line at `index` with `lines`; empty `lines` deletes it. */
-export function updateDescriptionLine(
-  board: Board,
-  cardId: string,
-  index: number,
-  lines: string[]
-): Board {
-  return mapCard(board, cardId, (card) => {
-    const description = [...card.description];
-    description.splice(index, 1, ...lines);
-    return { ...card, description };
-  });
-}
-
-export function addDescriptionLines(board: Board, cardId: string, lines: string[]): Board {
-  return mapCard(board, cardId, (card) => ({
-    ...card,
-    description: [...card.description, ...lines],
-  }));
+/** Sets the card's description; an empty string removes it. */
+export function setDescription(board: Board, cardId: string, text: string): Board {
+  return mapCard(board, cardId, (card) => ({ ...card, description: text }));
 }
 
 export function addTag(board: Board, cardId: string, tag: string): Board {
@@ -87,6 +71,16 @@ export function addColumn(board: Board, name: string): Board {
   return { ...board, columns };
 }
 
+/**
+ * Removes the column when it has no cards; no-op otherwise. Columns are
+ * deleted permanently — there is no archive for them.
+ */
+export function removeColumn(board: Board, columnId: string): Board {
+  const column = board.columns.find((c) => c.id === columnId);
+  if (!column || column.cards.length > 0) return board;
+  return { ...board, columns: board.columns.filter((c) => c.id !== columnId) };
+}
+
 export function addCard(board: Board, columnId: string, card: Card): Board {
   return {
     ...board,
@@ -122,6 +116,17 @@ export function reorderCard(board: Board, cardId: string, toIndex: number): Boar
   const column = findColumnOfCard(board, cardId);
   if (!column) return board;
   return moveCardToColumn(board, cardId, column.id, toIndex);
+}
+
+/** Moves the column `columnId` to the position of `overColumnId`. */
+export function moveColumn(board: Board, columnId: string, overColumnId: string): Board {
+  const from = board.columns.findIndex((c) => c.id === columnId);
+  const to = board.columns.findIndex((c) => c.id === overColumnId);
+  if (from < 0 || to < 0 || from === to) return board;
+  const columns = [...board.columns];
+  const [moved] = columns.splice(from, 1);
+  columns.splice(to, 0, moved);
+  return { ...board, columns };
 }
 
 // --- Archive ("Archived" column) ---

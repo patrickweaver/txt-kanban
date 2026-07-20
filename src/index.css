@@ -62,6 +62,12 @@
   box-sizing: border-box;
 }
 
+/* An open board uses the full browser width; the start screen stays centered. */
+#root:has(.app) {
+  width: 100%;
+  border-inline: none;
+}
+
 body {
   margin: 0;
 }

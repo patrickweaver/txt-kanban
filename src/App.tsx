@@ -5,13 +5,12 @@ import { parseBoard } from "./parser";
 import { serializeBoard } from "./serializer";
 import { createFileWriter } from "./fileWriter";
 import type { FileWriter } from "./fileWriter";
-import { addColumn, restoreCard } from "./boardOps";
+import { restoreCard } from "./boardOps";
 import { forgetFile, listRecentFiles, rememberFile } from "./recentFiles";
 import type { RecentFile } from "./recentFiles";
 import { useBoard } from "./useBoard";
 import BoardView from "./components/BoardView";
 import ArchiveView from "./components/ArchiveView";
-import ColumnModal from "./components/ColumnModal";
 
 function relativeTime(ms: number): string {
   const mins = Math.round((Date.now() - ms) / 60000);
@@ -43,7 +42,6 @@ function App() {
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [recents, setRecents] = useState<RecentFile[]>([]);
   const [view, setView] = useState<"board" | "archive">("board");
-  const [columnModalOpen, setColumnModalOpen] = useState(false);
   // The file text this app last loaded or wrote; polling compares against it
   // so our own saves are not mistaken for external edits.
   const lastTextRef = useRef<string | null>(null);
@@ -66,7 +64,12 @@ function App() {
       if (writer?.isBusy()) return;
       // Defer while the user is typing in an inline editor; a reload would
       // discard their in-progress edit.
-      if (document.activeElement instanceof HTMLInputElement) return;
+      if (
+        document.activeElement instanceof HTMLInputElement ||
+        document.activeElement instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
       checking = true;
       try {
         const file = await fileHandle.getFile();
@@ -116,7 +119,12 @@ function App() {
     try {
       const [handle] = await window.showOpenFilePicker({
         multiple: false,
-        types: [{ description: "Kanban text", accept: { "text/plain": [".txt"] } }],
+        types: [
+          {
+            description: "Kanban text",
+            accept: { "text/plain": [".txt"], "text/markdown": [".md"] },
+          },
+        ],
       });
       await openHandle(handle);
     } catch (error) {
@@ -200,7 +208,7 @@ function App() {
             <input
               id="file-input"
               type="file"
-              accept=".txt,text/plain"
+              accept=".txt,.md,text/plain,text/markdown"
               onChange={handleFileSelect}
             />
           </>
@@ -228,11 +236,6 @@ function App() {
             Archive
           </button>
         </nav>
-        {!readOnly && (
-          <button className="add-column" onClick={() => setColumnModalOpen(true)}>
-            + Column
-          </button>
-        )}
         {readOnly ? (
           <span className="save-status">
             Read-only — editing and saving require Chrome or Edge
@@ -260,8 +263,6 @@ function App() {
           readOnly={readOnly}
           onRestore={(cardId) => save(apply((b) => restoreCard(b, cardId)))}
         />
-      ) : board.columns.length === 0 ? (
-        <p className="board-empty">No columns found in this file.</p>
       ) : (
         <BoardView
           board={board}
@@ -269,16 +270,6 @@ function App() {
           apply={apply}
           restore={restore}
           save={save}
-        />
-      )}
-      {columnModalOpen && (
-        <ColumnModal
-          onSave={(name) => {
-            save(apply((b) => addColumn(b, name)));
-            setColumnModalOpen(false);
-            setView("board");
-          }}
-          onClose={() => setColumnModalOpen(false)}
         />
       )}
     </main>

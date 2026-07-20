@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useEffect, useState } from "react";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { Column } from "../types";
 import CardView from "./CardView";
+import ConfirmModal from "./ConfirmModal";
 
 interface ColumnViewProps {
   column: Column;
@@ -12,14 +13,15 @@ interface ColumnViewProps {
   /** Card that should open its description editor once (just added). */
   autoEditCardId?: string | null;
   onCardTitleChange: (cardId: string, title: string) => void;
-  onCardDescriptionChange: (cardId: string, index: number, lines: string[]) => void;
-  onCardDescriptionAdd: (cardId: string, lines: string[]) => void;
+  onCardDescriptionChange: (cardId: string, text: string) => void;
   onCardArchive: (cardId: string) => void;
   onCardAdd: (title: string) => void;
   onCardTagAdd: (cardId: string, tag: string) => void;
   onCardTagUpdate: (cardId: string, index: number, tag: string) => void;
   onCardTagRemove: (cardId: string, index: number) => void;
   onAutoEditConsumed: () => void;
+  /** Permanently removes this (empty) column. */
+  onRemove: () => void;
 }
 
 interface ComposerProps {
@@ -64,26 +66,81 @@ function ColumnView({
   autoEditCardId,
   onCardTitleChange,
   onCardDescriptionChange,
-  onCardDescriptionAdd,
   onCardArchive,
   onCardAdd,
   onCardTagAdd,
   onCardTagUpdate,
   onCardTagRemove,
   onAutoEditConsumed,
+  onRemove,
 }: ColumnViewProps) {
   const [composing, setComposing] = useState(false);
-  // Droppable on the card list keeps empty columns valid drop targets.
-  const { setNodeRef } = useDroppable({ id: column.id });
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  // True from pointer-down on the handle until release, so the column shows
+  // its active color the moment a drag *could* start, not 8px later.
+  const [pressed, setPressed] = useState(false);
+  const canDrag = !readOnly && !dragDisabled;
+  // The whole column is sortable (dragged by its header). Its droppable
+  // doubles as the drop target that lets cards land in an empty column.
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: column.id,
+      data: { type: "column" },
+      disabled: !canDrag,
+    });
+
+  // Release anywhere ends the pressed state, including clicks that never
+  // became a drag.
+  useEffect(() => {
+    if (!pressed) return;
+    const clear = () => setPressed(false);
+    window.addEventListener("pointerup", clear);
+    window.addEventListener("pointercancel", clear);
+    return () => {
+      window.removeEventListener("pointerup", clear);
+      window.removeEventListener("pointercancel", clear);
+    };
+  }, [pressed]);
 
   return (
-    <section className="column">
-      <h2 className="column-name">{column.name}</h2>
+    <section
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`column${pressed || isDragging ? " column-active" : ""}${
+        isDragging ? " column-dragging" : ""
+      }`}
+    >
+      <div className="column-header">
+        <h2
+          className={`column-name${canDrag ? " column-drag-handle" : ""}`}
+          {...attributes}
+          {...listeners}
+          onPointerDown={
+            canDrag
+              ? (e: React.PointerEvent<HTMLHeadingElement>) => {
+                  listeners?.onPointerDown?.(e);
+                  setPressed(true);
+                }
+              : undefined
+          }
+        >
+          {column.name}
+        </h2>
+        {!readOnly && !dragDisabled && column.cards.length === 0 && (
+          <button
+            className="column-delete"
+            title="Remove column"
+            onClick={() => setConfirmingRemove(true)}
+          >
+            ×
+          </button>
+        )}
+      </div>
       <SortableContext
         items={column.cards.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div ref={setNodeRef} className="column-cards">
+        <div className="column-cards">
           {column.cards.map((card) => (
             <CardView
               key={card.id}
@@ -92,8 +149,7 @@ function ColumnView({
               dragDisabled={dragDisabled}
               autoEdit={autoEditCardId === card.id}
               onTitleChange={(title) => onCardTitleChange(card.id, title)}
-              onDescriptionChange={(i, lines) => onCardDescriptionChange(card.id, i, lines)}
-              onDescriptionAdd={(lines) => onCardDescriptionAdd(card.id, lines)}
+              onDescriptionChange={(text) => onCardDescriptionChange(card.id, text)}
               onArchive={() => onCardArchive(card.id)}
               onTagAdd={(tag) => onCardTagAdd(card.id, tag)}
               onTagUpdate={(i, tag) => onCardTagUpdate(card.id, i, tag)}
@@ -111,6 +167,34 @@ function ColumnView({
             + Add card
           </button>
         ))}
+      {confirmingRemove && (
+        <ConfirmModal
+          message={`Remove the "${column.name}" column? This cannot be undone.`}
+          onConfirm={() => {
+            onRemove();
+            setConfirmingRemove(false);
+          }}
+          onClose={() => setConfirmingRemove(false)}
+        />
+      )}
+    </section>
+  );
+}
+
+/**
+ * The copy of a column carried by the DragOverlay while it is dragged. Pure
+ * markup — no sortable wiring — so it can't fight the real column's
+ * registrations.
+ */
+export function ColumnOverlay({ column }: { column: Column }) {
+  return (
+    <section className="column column-active column-overlay">
+      <h2 className="column-name">{column.name}</h2>
+      <div className="column-cards">
+        {column.cards.map((card) => (
+          <CardView key={card.id} card={card} readOnly overlay />
+        ))}
+      </div>
     </section>
   );
 }

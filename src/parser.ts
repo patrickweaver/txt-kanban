@@ -1,4 +1,5 @@
 import type { Board, Card, Column } from "./types";
+import { decodeDescription } from "./description";
 
 // Tolerance rules for the kanban .txt DSL:
 // - Line endings: \r\n, \r, and \n all accepted.
@@ -8,7 +9,8 @@ import type { Board, Card, Column } from "./types";
 //   order in the file is the order on the board.
 // - A list item indented by at least one space or tab is a property of the
 //   most recent card, whatever the indent depth. Properties are `Title: value`:
-//     * `Description:` appends a description line.
+//     * `Description:` sets the description. `\n` escapes become newlines;
+//       multiple lines (legacy files) are joined with newlines.
 //     * `Date:` sets the card's date (kept verbatim; last one wins).
 //     * `Tags:` appends comma-separated tags.
 //     * any other single-token title is kept as an "unknown property".
@@ -27,6 +29,11 @@ export function parseBoard(text: string): Board {
   const board: Board = { title: null, columns: [] };
   let currentColumn: Column | null = null;
   let currentCard: Card | null = null;
+
+  function appendDescription(card: Card, value: string): void {
+    const decoded = decodeDescription(value);
+    card.description = card.description === "" ? decoded : `${card.description}\n${decoded}`;
+  }
 
   for (const rawLine of text.split(/\r\n|\r|\n/)) {
     const line = rawLine.trimEnd();
@@ -53,7 +60,7 @@ export function parseBoard(text: string): Board {
       currentCard = {
         id: crypto.randomUUID(),
         title: content,
-        description: [],
+        description: "",
         date: null,
         tags: [],
         unknownProps: [],
@@ -62,13 +69,13 @@ export function parseBoard(text: string): Board {
     } else if (currentCard) {
       const prop = PROPERTY.exec(content);
       if (!prop) {
-        currentCard.description.push(content);
+        appendDescription(currentCard, content);
         continue;
       }
       const [, title, value] = prop;
       const key = title.toLowerCase();
       if (key === "description") {
-        currentCard.description.push(value);
+        appendDescription(currentCard, value);
       } else if (key === "date") {
         currentCard.date = value;
       } else if (key === "tags") {

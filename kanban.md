@@ -1,16 +1,16 @@
 # Kanban
 
+## Backlog
+
 ## To Do
 
-1. Non fixed width layout
-    - Description: The board layout should take the full browser width
-    - Date: 2026-07-09T05:32:53.181Z
-2. Column width: 300px
-    - Description: Columns should always be 300px wide and should not grow with the space allotted. If there is only one column it should be left aligned.
-    - Date: 2026-07-09T05:33:16.045Z
-3. Rearrange columns
-    - Description: Columns should be drag and drop to reorder them in the UI and in the file.
-    - Date: 2026-07-09T05:34:11.721Z
+1. Update Design
+    - Description: There should be 3 themes:\n1. Default Cranberry\n- This is a vaguely cranberry colored theme. The page background is a very light reddish pink, the borders are a dark cranberry, and the column backgrounds are a brighter cranberry.\n2. Boring\n- This is a light theme that is more boring than the current theme. The highlight color is a purplish blue. Update the other colors to be a bluish gray rather than beige, but otherwise similar to the current theme.\n3. Dark Boring\n- This is a standard dark theme, maybe slightly cranberryish.
+    - Date: 2026-07-17T04:49:18.627Z
+    - Tags: Design
+2. Save theme in markdown file
+    - Description: Themes should be more than a client setting.\nBetween the end of the lists of active cards and the "Archived" section of the markdown file, there should be a "Settings" section. This section is not populated as a list in the board.\nCurrently the only setting is the theme. This can be stored as an unordered list with titles like card titles are.
+    - Date: 2026-07-20T04:05:15.476Z
 
 ## In progress
 
@@ -71,6 +71,44 @@
     - Description: Starting with an empty file I am not able to create new columns. Add a "+Column" button at the top with the Board/Archive tabs. When the button is clicked, open a modal with "Cancel" and "Save" buttons. Added a "+ Column" header button and a ColumnModal (name input + Cancel/Save); new columns are inserted before any archive column and the view switches to Board.
     - Date: 2026-07-09T05:15:50.035Z
     - Tags: getting-started
+24. Non fixed width layout
+    - Description: The board layout should take the full browser width. The 1126px cap on #root is lifted while a board is open (the start screen stays centered); wide boards scroll horizontally.
+    - Date: 2026-07-09T05:32:53.181Z
+    - Tags: design, layout
+25. Column width: 300px
+    - Description: Columns should always be 300px wide and should not grow with the space allotted. If there is only one column it should be left aligned. Columns are now flex 0 0 300px (border-box), so they never grow; a lone column sits at the left edge.
+    - Date: 2026-07-09T05:33:16.045Z
+    - Tags: design, layout
+26. Rearrange columns
+    - Description: Columns should be drag and drop to reorder them in the UI and in the file. Columns are dnd-kit sortables dragged by their header; a moveColumn op reorders board.columns so the file is rewritten in the new order. Column drags only collide with columns; card drag-and-drop is unchanged.
+    - Date: 2026-07-09T05:34:11.721Z
+    - Tags: design, feature
+27. Moved columns blinking
+    - Description: When columns are moved they blink and disappear briefly when the user lets go of the drag. Fixed in two steps. First, columns reorder live during dragOver (like cards) so the drop slot is already final. That still blinked because the real column node followed the pointer and its transform cleared in one frame on release. Final fix: columns now use a DragOverlay like cards do. A ColumnOverlay copy follows the pointer, the real column stays in its slot as a 0.4-opacity ghost with no transform, and the drop animates the overlay into place.
+    - Date: 2026-07-16T04:15:28.552Z
+    - Tags: design, dragging
+28. Active column design
+    - Description: When columns are moved they switch into an active state (different color), only when the drag starts. They should change color as soon as the user clicks and the drag could start. The column now tints (accent background/border) on pointer-down on the header, before the 8px drag activation, and stays tinted until release.
+    - Date: 2026-07-16T04:16:14.161Z
+    - Tags: design, dragging
+29. Bug: Long cards cause drag not to work
+    - Description: When there are at least two cards with long descriptions, column dragging does not work. There is a minimal reproduction in kanban-empty.txt. Root cause was corner-based collision detection, where a tall column or card's corner distances swamp the horizontal signal. Column drags now compare horizontal centers only; card drags target whatever is under the pointer (pointerWithin) with corner distance as the gap fallback.
+    - Date: 2026-07-17T04:24:18.272Z
+    - Tags: dragging, bug
+30. Remove Column
+    - Description: If a column is empty it should render an 'x' in the top right corner like a card, and clicking the 'x' a modal should show that confirms the user wants to remove the column. The modal has "Cancel" and "Confirm" buttons. Clicking "Confirm" removes the column. Clicking "Cancel" closes the modal. There is no Archive for columns, they are permanently deleted. The x reveals on hover for empty columns only, and the removeColumn op refuses to delete a column that has cards.
+    - Date: 2026-07-17T04:25:24.872Z
+    - Tags: feature
+31. Move new column button
+    - Description: The new column button should be to the right of the rightmost column. It should be the same width as a column. Moved out of the header into the board row as a 300px dashed ghost column owned by BoardView; it also replaces the old empty-board message as the bootstrap path for empty files.
+    - Date: 2026-07-17T05:24:13.285Z
+    - Tags: Design
+32. Support .md files
+    - Description: The app should support .md files, treating them the same as .txt files. The file picker and the read-only fallback input now accept .txt and .md; everything downstream was already extension-agnostic.
+    - Date: 2026-07-17T05:27:34.247Z
+33. Bug: Each line on a card is a separate textarea.
+    - Description: There should only be one description item per card, it should support newlines. If newlines will break the markdown rendering in the unordered list in the file, then we should replace them with `\\n` in the file. Cards now have a single description edited in one auto-growing textarea (Shift+Enter inserts a line); the file stores it as a single `- Description:` line with newlines escaped as `\\n`, and legacy multi-line descriptions are joined on load. Clearing the text removes the description.
+    - Date: 2026-07-20T04:01:32.856Z
 
 ## Archived
 
@@ -81,3 +119,10 @@
 4. Test (deleted 2026-07-08 20:38)
 5. Testing save (deleted 2026-07-08 20:45)
     - Description: Yes
+6. Test Card (deleted 2026-07-19 21:08)
+    - Description: This is a test card
+    - Date: 2026-07-20T04:07:24.552Z
+    - Ooops: This is invalid
+7. Test Multi Line Card (deleted 2026-07-19 21:47)
+    - Description: This card has\nlinebreaks\nin it\n\nEven double\n\nlinebreaks.
+    - Date: 2026-07-20T04:45:41.606Z

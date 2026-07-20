@@ -7,8 +7,8 @@ any text editor — no database, no account, no server.
 
 The file is Markdown-ish: `##` headings are columns and list items are cards.
 It keeps the `.txt` extension on purpose, so the format stays free to grow its
-own conventions beyond standard Markdown. This repo's own `kanban.txt` is a
-working example.
+own conventions beyond standard Markdown — though `.md` files are accepted too
+and treated identically. This repo's own `kanban.md` is a working example.
 
 ## The file format
 
@@ -38,9 +38,16 @@ Mapping to the board:
 - `## ` — a column. Cards that appear before the first `##` are ignored.
 - A top-level list item — a card title.
 - An indented list item — a `Title: value` **property** of the card above it.
-  Two titles are known: `Description:` adds a note line, and `Tags:` adds
-  comma-separated tags. Any other title is preserved but flagged in the UI as an
-  unknown property (see [Tags](#tags)).
+  Three titles are known: `Description:` sets the card's description, `Date:`
+  sets its date, and `Tags:` adds comma-separated tags. Any other title is
+  preserved but flagged in the UI as an unknown property (see [Tags](#tags)).
+
+A card has **one** description, which may span multiple lines. In the file it
+stays a single `- Description:` item — a real newline would end the list item —
+so line breaks are written as the two-character escape `\n` (and backslashes as
+`\\`, so literal `\n` text survives). Multiple `- Description:` lines in a
+hand-edited file still parse: they are joined with newlines and collapse to one
+line on the next save.
 
 The parser is deliberately tolerant and never throws:
 
@@ -55,9 +62,10 @@ The parser is deliberately tolerant and never throws:
   skipped.
 
 When the app saves, it re-emits a canonical form: cards renumbered `1., 2., …`;
-each card's properties as 4-space-indented `- Description:` lines, then a single
-`- Tags:` line, then any preserved unknown properties; one blank line between
-blocks; and a trailing newline. Parsing then re-serializing a board is a
+each card's properties as 4-space-indented items — a single `- Description:`
+line (newlines escaped as `\n`), a `- Date:` line, a single `- Tags:` line, then
+any preserved unknown properties; one blank line between blocks; and a trailing
+newline. Parsing then re-serializing a board is a
 round-trip (identical modulo internal ids), so hand-edits and app edits
 converge on the same clean layout.
 
@@ -84,10 +92,14 @@ converge on the same clean layout.
   rather than dropping it. The **Archive** tab lists archived cards
   newest-first and can restore them (the timestamp is stripped on restore). An
   older `Deleted` column name is still recognized for backward compatibility.
+  Empty columns show their own `×` (with a confirm dialog); removing a column
+  is permanent — columns have no archive.
 - **Drag, drop, and inline edit.** Cards drag within and between columns
-  (pointer or keyboard, via [@dnd-kit](https://dndkit.com)). Click a title or a
-  note to edit in place; notes are auto-growing textareas. Enter commits,
-  Shift+Enter adds a line, Escape cancels.
+  (pointer or keyboard, via [@dnd-kit](https://dndkit.com)); columns reorder by
+  dragging their header, and the new order is written back to the file. Click a
+  title or a description to edit in place; the description is a single
+  auto-growing textarea that can span multiple lines. Enter commits,
+  Shift+Enter adds a line, Escape cancels. Clearing the description removes it.
 
 ### Tags
 

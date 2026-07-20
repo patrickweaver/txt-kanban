@@ -138,22 +138,6 @@
     border-color: var(--accent-border);
   }
 
-  .add-column {
-    font: inherit;
-    font-size: 14px;
-    white-space: nowrap;
-    color: var(--text);
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 3px 12px;
-    cursor: pointer;
-
-    &:hover {
-      color: var(--text-h);
-      border-color: var(--accent-border);
-    }
-  }
 
   .save-status {
     font-size: 14px;
@@ -179,13 +163,47 @@
   flex-grow: 1;
 }
 
+/* A ghost column at the end of the board row that creates a new column. */
+.board-add-column {
+  flex: 0 0 300px;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    color: var(--text-h);
+    border-color: var(--accent-border);
+  }
+}
+
+/* Fixed 300px columns: they don't grow into spare width, and a lone column
+   sits at the left edge (the board is a flex-start row). */
 .column {
-  flex: 1 1 0;
-  min-width: 260px;
+  flex: 0 0 300px;
+  box-sizing: border-box;
   background: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
+}
+
+.column-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 12px;
+
+  .column-name {
+    margin: 0;
+    flex-grow: 1;
+  }
 }
 
 .column-name {
@@ -193,6 +211,56 @@
   letter-spacing: 0;
   margin: 0 0 12px;
   padding: 0 4px;
+}
+
+/* Same reveal-on-hover treatment as a card's delete button. */
+.column-delete {
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 0 6px;
+  cursor: pointer;
+  visibility: hidden;
+
+  &:hover {
+    color: var(--text-h);
+    background: var(--accent-bg);
+  }
+}
+
+.column:hover .column-delete,
+.column:focus-within .column-delete {
+  visibility: visible;
+}
+
+/* The header doubles as the column's drag handle. */
+.column-drag-handle {
+  cursor: grab;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Pressed on the handle or mid-drag: tint the column so the grab is visible
+   from the moment the pointer goes down. */
+.column-active {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+/* The stationary ghost marking the drop slot; the DragOverlay copy carries
+   the visual. */
+.column-dragging {
+  opacity: 0.4;
+}
+
+.column-overlay {
+  box-shadow: var(--shadow);
+  cursor: grabbing;
 }
 
 .column-cards {
@@ -286,15 +354,12 @@
   visibility: visible;
 }
 
+/* A single block; newlines in the description are real line breaks. */
 .card-description {
-  list-style: none;
   margin: 6px 0 0;
-  padding: 0;
+  padding: 2px 0;
   font-size: 14px;
-
-  li {
-    padding: 2px 0;
-  }
+  white-space: pre-wrap;
 }
 
 .card-add-note {
@@ -502,6 +567,11 @@ textarea.inline-edit {
 .modal-input {
   width: 100%;
   font-size: 15px;
+}
+
+.modal-message {
+  font-size: 15px;
+  color: var(--text);
 }
 
 .modal-actions {

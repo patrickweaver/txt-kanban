@@ -15,8 +15,7 @@ interface CardViewProps {
   /** Just added via the composer: open its description editor once. */
   autoEdit?: boolean;
   onTitleChange?: (title: string) => void;
-  onDescriptionChange?: (index: number, lines: string[]) => void;
-  onDescriptionAdd?: (lines: string[]) => void;
+  onDescriptionChange?: (text: string) => void;
   onArchive?: () => void;
   onTagAdd?: (tag: string) => void;
   onTagUpdate?: (index: number, tag: string) => void;
@@ -93,14 +92,6 @@ function InlineEdit({ value, onCommit, onClose, multiline = false }: InlineEditP
   );
 }
 
-/** One nested list item per line; blank lines are dropped. */
-function toNoteLines(text: string): string[] {
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
-}
-
 interface TagComposerProps {
   onAdd: (tag: string) => void;
   onClose: () => void;
@@ -144,25 +135,25 @@ function CardView({
   autoEdit = false,
   onTitleChange,
   onDescriptionChange,
-  onDescriptionAdd,
   onArchive,
   onTagAdd,
   onTagUpdate,
   onTagRemove,
   onAutoEditConsumed,
 }: CardViewProps) {
-  // "title" | description index | "new-note" | "new-tag" | null
-  const [editing, setEditing] = useState<"title" | "new-note" | "new-tag" | number | null>(null);
+  // A card just added via the composer mounts with its description editor open
+  // (adding the card and flagging it happen in the same parent render), so
+  // Enter on the title flows straight into writing the description.
+  const [editing, setEditing] = useState<"title" | "description" | "new-tag" | null>(
+    autoEdit ? "description" : null
+  );
   // Index of the tag whose edit/remove modal is open, or null.
   const [tagModal, setTagModal] = useState<number | null>(null);
 
-  // A card just added via the composer opens its description editor once, so
-  // Enter on the title flows straight into writing the description.
+  // Clear the parent's flag so a later remount (e.g. after a cross-column
+  // drag) doesn't reopen the editor.
   useEffect(() => {
-    if (autoEdit) {
-      setEditing("new-note");
-      onAutoEditConsumed?.();
-    }
+    if (autoEdit) onAutoEditConsumed?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoEdit]);
 
@@ -210,41 +201,27 @@ function CardView({
       {cardDate !== null && (
         <div className="card-date">{formatDateTime(new Date(cardDate))}</div>
       )}
-      {(card.description.length > 0 || editing === "new-note") && (
-        <ul className="card-description">
-          {card.description.map((line, i) =>
-            editing === i ? (
-              <li key={i}>
-                <InlineEdit
-                  multiline
-                  value={line}
-                  onCommit={(text) => onDescriptionChange?.(i, toNoteLines(text))}
-                  onClose={() => setEditing(null)}
-                />
-              </li>
-            ) : (
-              <li
-                key={i}
-                onClick={readOnly || overlay ? undefined : () => setEditing(i)}
-              >
-                {line}
-              </li>
-            )
-          )}
-          {editing === "new-note" && (
-            <li>
-              <InlineEdit
-                multiline
-                value=""
-                onCommit={(text) => onDescriptionAdd?.(toNoteLines(text))}
-                onClose={() => setEditing(null)}
-              />
-            </li>
-          )}
-        </ul>
+      {editing === "description" ? (
+        <div className="card-description">
+          <InlineEdit
+            multiline
+            value={card.description}
+            onCommit={(text) => onDescriptionChange?.(text)}
+            onClose={() => setEditing(null)}
+          />
+        </div>
+      ) : (
+        card.description !== "" && (
+          <p
+            className="card-description"
+            onClick={readOnly || overlay ? undefined : () => setEditing("description")}
+          >
+            {card.description}
+          </p>
+        )
       )}
-      {!readOnly && !overlay && card.description.length === 0 && editing !== "new-note" && (
-        <button className="card-add-note" onClick={() => setEditing("new-note")}>
+      {!readOnly && !overlay && card.description === "" && editing !== "description" && (
+        <button className="card-add-note" onClick={() => setEditing("description")}>
           + description
         </button>
       )}

@@ -41,12 +41,8 @@ function ArchiveView({ board, readOnly, onRestore }: ArchiveViewProps) {
                 {cardDate !== null && (
                   <div className="card-date">{formatDateTime(new Date(cardDate))}</div>
                 )}
-                {card.description.length > 0 && (
-                  <ul className="card-description">
-                    {card.description.map((line, i) => (
-                      <li key={i}>{line}</li>
-                    ))}
-                  </ul>
+                {card.description !== "" && (
+                  <p className="card-description">{card.description}</p>
                 )}
                 {card.tags.length > 0 && (
                   <ul className="card-tags">
