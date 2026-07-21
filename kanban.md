@@ -5,12 +5,20 @@
 ## To Do
 
 1. Update Design
-    - Description: There should be 3 themes:\n1. Default Cranberry\n- This is a vaguely cranberry colored theme. The page background is a very light reddish pink, the borders are a dark cranberry, and the column backgrounds are a brighter cranberry.\n2. Boring\n- This is a light theme that is more boring than the current theme. The highlight color is a purplish blue. Update the other colors to be a bluish gray rather than beige, but otherwise similar to the current theme.\n3. Dark Boring\n- This is a standard dark theme, maybe slightly cranberryish.
-    - Date: 2026-07-17T04:49:18.627Z
-    - Tags: Design
+   - Description: There should be 3 themes:
+     1. Default Cranberry
+        - This is a vaguely cranberry colored theme. The page background is a very light reddish pink, the borders are a dark cranberry, and the column backgrounds are a brighter cranberry.
+     2. Boring
+        - This is a light theme that is more boring than the current theme. The highlight color is a purplish blue. Update the other colors to be a bluish gray rather than beige, but otherwise similar to the current theme.
+     3. Dark Boring
+        - This is a standard dark theme, maybe slightly cranberryish.
+   - Date: 2026-07-17T04:49:18.627Z
+   - Tags: Design
 2. Save theme in markdown file
-    - Description: Themes should be more than a client setting.\nBetween the end of the lists of active cards and the "Archived" section of the markdown file, there should be a "Settings" section. This section is not populated as a list in the board.\nCurrently the only setting is the theme. This can be stored as an unordered list with titles like card titles are.
-    - Date: 2026-07-20T04:05:15.476Z
+   - Description: Themes should be more than a client setting.
+     Between the end of the lists of active cards and the "Archived" section of the markdown file, there should be a "Settings" section. This section is not populated as a list in the board.
+     Currently the only setting is the theme. This can be stored as an unordered list with titles like card titles are.
+   - Date: 2026-07-20T04:05:15.476Z
 
 ## In progress
 
@@ -18,22 +26,22 @@
 
 1. Create Repo
 2. Load file in web app
-    - Tags: filesystem
+   - Tags: filesystem
 3. Set up Claude Code
 4. Write to file from web app
-    - Tags: filesystem
+   - Tags: filesystem
 5. Allow editing .txt file directly
-    - Description: Updates to the .txt file via a text editor should be allowed. This should not cause a problem, even if the web app is open. The updates made directly should populate in the web app.
-    - Tags: filesystem
+   - Description: Updates to the .txt file via a text editor should be allowed. This should not cause a problem, even if the web app is open. The updates made directly should populate in the web app.
+   - Tags: filesystem
 6. Design tweaks
-    - Description: There is no visual space between a new card title being edited, and the card above it.
-    - Tags: design
+   - Description: There is no visual space between a new card title being edited, and the card above it.
+   - Tags: design
 7. Don't show and hide the "+note" button on hover
-    - Description: The +note button should always be visible unless there is already a note.
+   - Description: The +note button should always be visible unless there is already a note.
 8. Read file paths from local storage
-    - Description: Save the paths of recently opened kanban files in localstorage and suggest them on the start page. Clicking one of the paths opens it and bypasses the file picker.
+   - Description: Save the paths of recently opened kanban files in localstorage and suggest them on the start page. Clicking one of the paths opens it and bypasses the file picker.
 9. Deleted List
-    - Description: Add a ## Deleted list to the .txt file (or use the one that exists if it is already there). Cards that are removed with the 'x' button should be moved to the Deleted list. Cards should have a a deleted at timestamp appended to the title when moved to deleted so we can list them in a recently deleted list. Tabs at the top of the kanban board, "Board", and "Archive", and when Archive is clicked, toggle to an "Archive" mode that replaces the current lists with a single Archive list.
+   - Description: Add a ## Deleted list to the .txt file (or use the one that exists if it is already there). Cards that are removed with the 'x' button should be moved to the Deleted list. Cards should have a a deleted at timestamp appended to the title when moved to deleted so we can list them in a recently deleted list. Tabs at the top of the kanban board, "Board", and "Archive", and when Archive is clicked, toggle to an "Archive" mode that replaces the current lists with a single Archive list.
 10. Note should be a textarea
     - Description: Notes are hard to edit when they get long, it should use <textarea>.
 11. Explain or remove "Saved"
@@ -107,22 +115,41 @@
     - Description: The app should support .md files, treating them the same as .txt files. The file picker and the read-only fallback input now accept .txt and .md; everything downstream was already extension-agnostic.
     - Date: 2026-07-17T05:27:34.247Z
 33. Bug: Each line on a card is a separate textarea.
-    - Description: There should only be one description item per card, it should support newlines. If newlines will break the markdown rendering in the unordered list in the file, then we should replace them with `\\n` in the file. Cards now have a single description edited in one auto-growing textarea (Shift+Enter inserts a line); the file stores it as a single `- Description:` line with newlines escaped as `\\n`, and legacy multi-line descriptions are joined on load. Clearing the text removes the description.
+    - Description: There should only be one description item per card, it should support newlines. If newlines will break the markdown rendering in the unordered list in the file, then we should replace them with `\n` in the file. Cards now have a single description edited in one auto-growing textarea (Shift+Enter inserts a line); the file stored it as a single `- Description:` line with newlines escaped as `\n` (since superseded by nested continuation lines, ticket 34), and legacy multi-line descriptions are joined on load. Clearing the text removes the description.
     - Date: 2026-07-20T04:01:32.856Z
+34. Nested lists for descriptions
+    - Description: I formatted the markdown file with nested lists, can we support this for descriptions rather than `\n`? Replaced the `\n` escapes: any line indented deeper than a card's property level now continues the description, keeping its own list marker and its indentation relative to the `- Description: ` content column, so nested markdown lists survive a round-trip. The serializer indents properties to the card's content column (3 spaces under `1. `, 4 under `10. `), matching what Prettier produces, so formatting the file and saving from the app converge. Blank lines can't be represented, so they are dropped on commit.
+    - Date: 2026-07-20T05:12:00.000Z
 
 ## Archived
 
 1. Test (deleted 2026-07-07 22:04)
 2. Update Name (deleted 2026-07-08 20:32)
-    - Description: The new name of the project is "Cranban"
+   - Description: The new name of the project is "Cranban"
 3. ok yes (deleted 2026-07-08 20:38)
 4. Test (deleted 2026-07-08 20:38)
 5. Testing save (deleted 2026-07-08 20:45)
-    - Description: Yes
+   - Description: Yes
 6. Test Card (deleted 2026-07-19 21:08)
-    - Description: This is a test card
-    - Date: 2026-07-20T04:07:24.552Z
-    - Ooops: This is invalid
+   - Description: This is a test card
+   - Date: 2026-07-20T04:07:24.552Z
+   - Ooops: This is invalid
 7. Test Multi Line Card (deleted 2026-07-19 21:47)
-    - Description: This card has\nlinebreaks\nin it\n\nEven double\n\nlinebreaks.
-    - Date: 2026-07-20T04:45:41.606Z
+   - Description: This card has
+     linebreaks
+     in it
+     Even double
+     linebreaks.
+   - Date: 2026-07-20T04:45:41.606Z
+8. Test Multi Line Card (deleted 2026-07-20 20:14)
+   - Description: This is a test card with multiple lines.
+     1. This is a list
+         - With sublists
+     2. This is the second item.
+     What about another list?
+     1. What if I don't indent?
+     - OK no indent
+     2. Hello
+     - Yes
+     - No
+   - Date: 2026-07-21T03:12:38.386Z

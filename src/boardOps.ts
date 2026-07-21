@@ -30,9 +30,19 @@ export function updateCardTitle(board: Board, cardId: string, title: string): Bo
   return mapCard(board, cardId, (card) => ({ ...card, title }));
 }
 
-/** Sets the card's description; an empty string removes it. */
+/**
+ * Sets the card's description; an empty string removes it. Lines are
+ * trailing-trimmed and blank lines dropped: the file stores one list line per
+ * description line, and the parser skips blanks, so neither would survive a
+ * round-trip.
+ */
 export function setDescription(board: Board, cardId: string, text: string): Board {
-  return mapCard(board, cardId, (card) => ({ ...card, description: text }));
+  const normalized = text
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line !== "")
+    .join("\n");
+  return mapCard(board, cardId, (card) => ({ ...card, description: normalized }));
 }
 
 export function addTag(board: Board, cardId: string, tag: string): Board {

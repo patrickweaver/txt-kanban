@@ -1,13 +1,15 @@
 import type { Board } from "./types";
-import { encodeDescription } from "./description";
 
 // Canonical output format: `# Title` (omitted when null), one `## Name` block
 // per column, cards renumbered 1., 2., ... Each card's properties follow as
-// 4-space-indented `- Title: value` items in a fixed order: a single
-// `Description:` line (newlines escaped as `\n`), a `Date:` line, a single
-// `Tags:` line, then any preserved unknown properties.
-// Blocks are separated by a single blank line and the file ends with one
-// newline.
+// `- Title: value` items indented to the card's content column (3 spaces
+// under `1. `, 4 under `10. ` — the same alignment markdown formatters use),
+// in a fixed order: a single `Description:` item, a `Date:` line, a single
+// `Tags:` line, then any preserved unknown properties. A multi-line
+// description continues on lines nested past the `- Description: ` content
+// column, each keeping its own relative indentation, so nested markdown lists
+// survive. Blocks are separated by a single blank line and the file ends with
+// one newline.
 // Round-trip guarantee: parseBoard(serializeBoard(b)) equals b modulo ids.
 
 export function serializeBoard(board: Board): string {
@@ -18,13 +20,17 @@ export function serializeBoard(board: Board): string {
   for (const column of board.columns) {
     blocks.push(`## ${column.name}`);
     const cardLines = column.cards.map((card, i) => {
-      const lines = [`${i + 1}. ${card.title}`];
+      const marker = `${i + 1}. `;
+      const pad = " ".repeat(marker.length);
+      const lines = [`${marker}${card.title}`];
       if (card.description !== "") {
-        lines.push(`    - Description: ${encodeDescription(card.description)}`);
+        const [first, ...rest] = card.description.split("\n");
+        lines.push(`${pad}- Description: ${first}`);
+        for (const cont of rest) lines.push(`${pad}  ${cont}`);
       }
-      if (card.date !== null) lines.push(`    - Date: ${card.date}`);
-      if (card.tags.length > 0) lines.push(`    - Tags: ${card.tags.join(", ")}`);
-      for (const prop of card.unknownProps) lines.push(`    - ${prop.title}: ${prop.value}`);
+      if (card.date !== null) lines.push(`${pad}- Date: ${card.date}`);
+      if (card.tags.length > 0) lines.push(`${pad}- Tags: ${card.tags.join(", ")}`);
+      for (const prop of card.unknownProps) lines.push(`${pad}- ${prop.title}: ${prop.value}`);
       return lines.join("\n");
     });
     if (cardLines.length > 0) blocks.push(cardLines.join("\n"));

@@ -8,8 +8,9 @@ export interface Card {
   /** Runtime-only identity for React keys and drag-and-drop; never serialized. */
   id: string;
   title: string;
-  /** The card's description, possibly multi-line; empty string = none.
-   *  Stored in the file as one `- Description:` line with newlines escaped. */
+  /** The card's description, possibly multi-line; empty string = none. Extra
+   *  lines are stored in the file nested under the `- Description:` item and
+   *  may carry their own list markers and relative indentation. */
   description: string;
   /** Raw `- Date:` value, preserved verbatim for round-trip; null = none. */
   date: string | null;

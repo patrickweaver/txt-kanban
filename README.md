@@ -42,12 +42,26 @@ Mapping to the board:
   sets its date, and `Tags:` adds comma-separated tags. Any other title is
   preserved but flagged in the UI as an unknown property (see [Tags](#tags)).
 
-A card has **one** description, which may span multiple lines. In the file it
-stays a single `- Description:` item — a real newline would end the list item —
-so line breaks are written as the two-character escape `\n` (and backslashes as
-`\\`, so literal `\n` text survives). Multiple `- Description:` lines in a
-hand-edited file still parse: they are joined with newlines and collapse to one
-line on the next save.
+A card has **one** description, which may span multiple lines. Extra lines are
+written **nested under** the `- Description:` item — anything indented deeper
+than the card's property level continues the description. Continuation lines
+keep their own list markers and their indentation relative to the
+`- Description: ` content column, so a description can hold a nested markdown
+list:
+
+```
+1. Update Design
+   - Description: There should be 3 themes:
+     1. Default Cranberry
+        - A vaguely cranberry colored theme.
+     2. Boring
+   - Tags: Design
+```
+
+Blank lines can't appear inside a description (the parser skips them), so they
+are dropped when a description is edited in the app. Multiple `- Description:`
+lines in a hand-edited file still parse: they are joined with newlines and
+collapse to one item on the next save.
 
 The parser is deliberately tolerant and never throws:
 
@@ -62,10 +76,12 @@ The parser is deliberately tolerant and never throws:
   skipped.
 
 When the app saves, it re-emits a canonical form: cards renumbered `1., 2., …`;
-each card's properties as 4-space-indented items — a single `- Description:`
-line (newlines escaped as `\n`), a `- Date:` line, a single `- Tags:` line, then
-any preserved unknown properties; one blank line between blocks; and a trailing
-newline. Parsing then re-serializing a board is a
+each card's properties as `- Title: value` items indented to the card's content
+column (3 spaces under `1. `, 4 under `10. ` — the alignment markdown
+formatters like Prettier produce, so formatting the file and saving from the
+app converge) — a single `- Description:` item with continuation lines nested
+under it, a `- Date:` line, a single `- Tags:` line, then any preserved unknown
+properties; one blank line between blocks; and a trailing newline. Parsing then re-serializing a board is a
 round-trip (identical modulo internal ids), so hand-edits and app edits
 converge on the same clean layout.
 
