@@ -6,8 +6,10 @@ import { serializeBoard } from "./serializer";
 import { createFileWriter } from "./fileWriter";
 import type { FileWriter } from "./fileWriter";
 import { THEME_SETTING, readSetting, restoreCard, writeSetting } from "./boardOps";
-import { forgetFile, listRecentFiles, rememberFile } from "./recentFiles";
+import { forgetFile, getRecentFile, listRecentFiles, rememberFile } from "./recentFiles";
 import type { RecentFile } from "./recentFiles";
+import { boardHash, parseBoardHash } from "./boardUrl";
+import type { BoardRef } from "./boardUrl";
 import { useBoard } from "./useBoard";
 import {
   DEFAULT_THEME,
@@ -70,17 +72,43 @@ function App() {
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [recents, setRecents] = useState<RecentFile[]>([]);
   const [view, setView] = useState<"board" | "archive">("board");
+  // A board named by the URL that needs a click before the browser will grant
+  // file permission (permission does not survive a page load on its own).
+  const [pendingBoard, setPendingBoard] = useState<RecentFile | null>(null);
   // Mirrors the file's `Theme` setting once a board is open; before that (and
   // for files that set no theme) it is the browser-local default.
   const [theme, setTheme] = useState<ThemeId>(() => readStoredTheme() ?? DEFAULT_THEME);
   // The file text this app last loaded or wrote; polling compares against it
   // so our own saves are not mistaken for external edits.
   const lastTextRef = useRef<string | null>(null);
+  // The hash this app set itself, so its own hashchange events are ignored.
+  const ownHashRef = useRef<string>("");
 
   const readOnly = board !== null && writer === null;
 
   useEffect(() => {
     if (supportsFilePicker) void listRecentFiles().then(setRecents);
+  }, []);
+
+  // Open whatever board the URL names, and keep following the URL as the user
+  // navigates back and forward.
+  useEffect(() => {
+    if (!supportsFilePicker) return;
+    const initial = parseBoardHash(location.hash);
+    if (initial) {
+      ownHashRef.current = location.hash;
+      void openFromUrl(initial);
+    }
+    function onHashChange(): void {
+      if (location.hash === ownHashRef.current) return;
+      ownHashRef.current = location.hash;
+      const ref = parseBoardHash(location.hash);
+      if (ref) void openFromUrl(ref);
+      else closeBoard();
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // The theme is a document-level concern (page background, form controls), so
@@ -151,13 +179,21 @@ function App() {
     setSavedAt(null);
     setOpenError(null);
     setView("board");
+    setPendingBoard(null);
     lastTextRef.current = text;
     load(parsed);
     // A file without a Theme setting keeps whatever is already selected,
     // rather than resetting the user's choice.
     const fromFile = resolveThemeId(readSetting(parsed, THEME_SETTING) ?? "");
     if (fromFile) setTheme(fromFile);
-    void rememberFile(handle, parsed.title).then(listRecentFiles).then(setRecents);
+    void rememberFile(handle, parsed.title).then((id) => {
+      // Point the URL at this board once it has a stable recents id.
+      if (id !== null) {
+        ownHashRef.current = boardHash(id, handle.name);
+        if (location.hash !== ownHashRef.current) location.hash = ownHashRef.current;
+      }
+      return listRecentFiles().then(setRecents);
+    });
   }
 
   async function openFile(): Promise<void> {
@@ -193,6 +229,85 @@ function App() {
       void forgetFile(recent.id).then(listRecentFiles).then(setRecents);
       setOpenError(`Could not open ${recent.name}: ${String(error)}`);
     }
+  }
+
+  /** Resolves a URL board reference to a stored handle: by id, else by name. */
+  async function findBoard(ref: BoardRef): Promise<RecentFile | null> {
+    if (ref.id !== null) {
+      const byId = await getRecentFile(ref.id);
+      if (byId) return byId;
+    }
+    if (!ref.name) return null;
+    // Ids are per-browser, so fall back to the name for links opened elsewhere.
+    return (await listRecentFiles()).find((entry) => entry.name === ref.name) ?? null;
+  }
+
+  /**
+   * Opens the board a URL points at. File permission does not survive a page
+   * load, so unless the browser still grants it we surface a button instead:
+   * re-requesting permission requires a user gesture.
+   */
+  async function openFromUrl(ref: BoardRef): Promise<void> {
+    const recent = await findBoard(ref);
+    if (!recent) {
+      // The URL names the board on screen, so stop showing the old one rather
+      // than leaving the address bar contradicting the board (and hiding the
+      // message, which only the start screen renders). Nothing is lost: edits
+      // are already on disk and recents reopen in a click.
+      closeBoard();
+      setOpenError(
+        `No board in this browser matches ${ref.name ?? "that link"}. Open the file once to link it.`
+      );
+      return;
+    }
+    let granted: boolean;
+    try {
+      granted = (await recent.handle.queryPermission({ mode: "readwrite" })) === "granted";
+    } catch {
+      granted = false;
+    }
+    if (granted) {
+      await openHandle(recent.handle);
+      return;
+    }
+    closeBoard();
+    setPendingBoard(recent);
+  }
+
+  /** Grants permission for the URL's board from a click, then opens it. */
+  async function openPendingBoard(): Promise<void> {
+    if (!pendingBoard) return;
+    try {
+      if ((await pendingBoard.handle.requestPermission({ mode: "readwrite" })) !== "granted") {
+        setOpenError(`Permission to open ${pendingBoard.name} was denied`);
+        return;
+      }
+      await openHandle(pendingBoard.handle);
+    } catch (error) {
+      setOpenError(`Could not open ${pendingBoard.name}: ${String(error)}`);
+    }
+  }
+
+  function closeBoard(): void {
+    setWriter(null);
+    setFileHandle(null);
+    setFileName(null);
+    setSaveStatus("idle");
+    setSavedAt(null);
+    setOpenError(null);
+    setPendingBoard(null);
+    setView("board");
+    lastTextRef.current = null;
+    load(null);
+    void listRecentFiles().then(setRecents);
+  }
+
+  /** Back to the picker at the root URL; the file stays in recents. */
+  function switchBoards(): void {
+    ownHashRef.current = "";
+    // pushState leaves a history entry, so Back returns to the board.
+    history.pushState(null, "", location.pathname + location.search);
+    closeBoard();
   }
 
   async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -238,10 +353,21 @@ function App() {
   if (board === null) {
     return (
       <section id="center">
-        <h1>Kanban</h1>
+        <h1>Cranban</h1>
         {openError && <p className="open-error">{openError}</p>}
         {supportsFilePicker ? (
           <>
+            {pendingBoard && (
+              <div className="pending-board">
+                <button className="open-button" onClick={openPendingBoard}>
+                  Open {pendingBoard.name}
+                </button>
+                <p className="pending-note">
+                  This link points at a board on this computer. Browsers ask for
+                  permission again after a page load, so it takes one click.
+                </p>
+              </div>
+            )}
             <button className="open-button" onClick={openFile}>
               Open kanban file
             </button>
@@ -264,7 +390,7 @@ function App() {
           </>
         ) : (
           <>
-            <label htmlFor="file-input">Select Kanban file</label>
+            <label htmlFor="file-input">Select kanban file</label>
             <input
               id="file-input"
               type="file"
@@ -281,7 +407,7 @@ function App() {
   return (
     <main className="app">
       <header className="app-header">
-        <h1 className="board-title">{board.title ?? "Kanban"}</h1>
+        <h1 className="board-title">{board.title ?? "Cranban"}</h1>
         <span className="file-name">{fileName}</span>
         <nav className="tabs">
           <button
@@ -297,6 +423,13 @@ function App() {
             Archive
           </button>
         </nav>
+        <button
+          className="switch-boards"
+          title="Close this board and pick another"
+          onClick={switchBoards}
+        >
+          Switch Boards
+        </button>
         <ThemePicker theme={theme} onChange={changeTheme} />
         {readOnly ? (
           <span className="save-status">

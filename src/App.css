@@ -35,6 +35,21 @@
   color: var(--accent);
 }
 
+/* The board a URL points at, waiting on a click to re-grant file permission. */
+.pending-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.pending-note {
+  font-size: 14px;
+  color: var(--text);
+  text-align: center;
+}
+
 .recent-files {
   text-align: center;
 
@@ -138,6 +153,24 @@
     border-color: var(--accent-border);
   }
 
+
+  /* An action, not a view tab, so it carries a border to set it apart. */
+  .switch-boards {
+    font: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 12px;
+    margin-left: 12px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-h);
+      border-color: var(--accent-border);
+    }
+  }
 
   .save-status {
     font-size: 14px;

@@ -1,6 +1,8 @@
-# Kanban Txt
+# Cranban
 
-This is a local first web app that creates a KanBan board from a .txt file. The .txt file is kept in source control with the project that is being worked on. In this repo, as an example, we have `kanban.txt`.
+This is a local first web app that creates a kanban board from a .txt file. The .txt file is kept in source control with the project that is being worked on. In this repo, as an example, we have `kanban.md`.
+
+The project is named Cranban, after the cranberry-colored default theme. The name appears in the UI, the page title, and package.json, but deliberately *not* in the IndexedDB database name or the localStorage theme key: renaming those would orphan stored file handles (losing recents and breaking board URLs) and discard the saved theme.
 
 The .txt file has the structure seen in this example:
 

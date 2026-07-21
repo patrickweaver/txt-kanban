@@ -5,7 +5,8 @@ export interface BoardState {
   board: Board | null;
   /** Always the latest board, safe to read from rapidly-firing handlers. */
   boardRef: React.RefObject<Board | null>;
-  load(board: Board): void;
+  /** null closes the board and returns to the start screen. */
+  load(board: Board | null): void;
   /** Applies a pure mutation and returns the next board so callers can save it. */
   apply(fn: (board: Board) => Board): Board;
   /** Replaces the whole board (drag-cancel restore). */
@@ -16,7 +17,7 @@ export function useBoard(): BoardState {
   const [board, setBoard] = useState<Board | null>(null);
   const boardRef = useRef<Board | null>(null);
 
-  const load = useCallback((next: Board): void => {
+  const load = useCallback((next: Board | null): void => {
     boardRef.current = next;
     setBoard(next);
   }, []);

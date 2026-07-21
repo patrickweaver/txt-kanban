@@ -2,18 +2,22 @@
 
 ## Backlog
 
-1. Rename project "Cranban"
-   - Description: The project should have a fun and googlable name that goes with the theme.
-   - Date: 2026-07-21T04:16:05.871Z
+1. Seed empty files
+   - Description: If an empty file is opened create a default empty "To Do" list
+     Also add a "Cranban Board" top level header.
+   - Date: 2026-07-21T04:38:32.453Z
+2. Add explanation prompt to board
+   - Description: A new board should have a short agent-facing prompt explaining how the project works with examples of syntax.
+   - Date: 2026-07-21T04:57:35.660Z
+3. Explanation
+   - Description: Add an explanation to the default page before any files are selected
+   - Date: 2026-07-21T04:58:38.663Z
+4. Update favicon
+   - Date: 2026-07-21T04:59:04.797Z
+5. Create a default list as a downloadable file
+   - Date: 2026-07-21T04:59:30.387Z
 
 ## To Do
-
-1. Save local file path in URL Hash
-   - Description: The URL hash should be set to the file path of the file when one is opened. Navigating to that URL should open that file and skip the file picker.
-   - Date: 2026-07-21T04:28:37.733Z
-2. Switch Boards
-   - Description: Add a "Switch Boards" button that navigates back to the root URL and the file picker
-   - Date: 2026-07-21T04:36:23.346Z
 
 ## In progress
 
@@ -153,6 +157,22 @@
       Also rename "Default Cranberry" to just "Cranberry" since we are adding a local default.
       Picking a theme on the start screen writes it to localStorage; picking one with a board open still goes to that file's Settings and deliberately does not touch the local default, so theming one board can't change how every other unthemed board looks. The stored theme is applied by an inline script in index.html before first paint, so a refresh doesn't flash the wrong theme. Unreadable storage (private mode) and unrecognized values fall back to the default rather than sticking. The old "Default Cranberry" label is kept as a resolver alias so files written or hand-edited before the rename still load.
     - Date: 2026-07-21T04:26:56.373Z
+40. Save local file path in URL Hash
+    - Description: The URL hash should be set to the file path of the file when one is opened. Navigating to that URL should open that file and skip the file picker.
+      The path itself cannot go in the URL: the File System Access API never exposes a file path, and a page cannot turn a path into a handle even if it had one, so opening always needs the picker or a handle the browser already stored. The hash instead carries `#<recents id>-<file name>` (e.g. `#3-kanban.md`), resolving the id against the handle already kept in IndexedDB, with the name keeping links legible and acting as a fallback. rememberFile now returns its stable record id. Permission does not survive a page load, so a link opens silently when the browser still grants it and otherwise shows a one-click "Open <name>" prompt. A link that matches nothing in this browser closes the board and explains itself rather than leaving the address bar contradicting the screen.
+    - Date: 2026-07-21T04:28:37.733Z
+41. Switch Boards
+    - Description: Add a "Switch Boards" button that navigates back to the root URL and the file picker
+      The header button pushes the root URL and closes the board, leaving a history entry so Back returns to it; a hashchange listener keeps browser navigation and the displayed board in sync in both directions.
+    - Date: 2026-07-21T04:36:23.346Z
+42. Rename project "Cranban"
+    - Description: The project should have a fun and googlable name that goes with the theme.
+      Renamed everywhere the name is identity: the page title, the start screen heading, the default board title, package.json, README and CLAUDE.md. Deliberately not renamed: the IndexedDB database and the localStorage theme key, since changing those would orphan every stored file handle (losing recents and breaking the `#<id>-<name>` board links) and discard the saved theme. Both now carry comments saying so, and CLAUDE.md records the reasoning. Generic uses of "kanban" for the file format and the board concept were left alone.
+    - Date: 2026-07-21T04:16:05.871Z
+
+## Settings
+
+- Theme: cranberry
 
 ## Archived
 

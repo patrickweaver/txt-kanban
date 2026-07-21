@@ -15,7 +15,11 @@ export type ThemeId = (typeof THEMES)[number]["id"];
 /** Used until the browser has a stored preference. */
 export const DEFAULT_THEME: ThemeId = "cranberry";
 
-/** Also read by the pre-paint script in index.html; keep the two in sync. */
+/**
+ * Also read by the pre-paint script in index.html; keep the two in sync.
+ * Predates the rename to Cranban; renaming it would silently discard the
+ * stored preference, so the old key stays.
+ */
 export const THEME_STORAGE_KEY = "kanban.theme";
 
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[\s_-]+/g, "");

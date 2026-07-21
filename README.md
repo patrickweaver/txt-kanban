@@ -1,6 +1,6 @@
-# Kanban Txt
+# Cranban
 
-A local-first Kanban board that reads and writes a plain `.txt` file. The file
+A local-first kanban board that reads and writes a plain `.txt` file. The file
 is meant to live in source control alongside the project it tracks, so your
 board is versioned with your code, diffs in pull requests, and is editable in
 any text editor — no database, no account, no server.
@@ -105,6 +105,17 @@ converge on the same clean layout.
   structured-cloneable into IndexedDB, so recently opened files are remembered
   (up to 8) and offered on the start screen. Reopening one skips the picker
   after a permission re-prompt.
+- **Boards have URLs.** The open board is reflected in the hash as
+  `#<id>-<file name>` (e.g. `#3-kanban.md`), so a board can be bookmarked and
+  reopened directly, and **Switch Boards** in the header returns to the picker
+  at the root URL. Back and forward follow along. Note the hash cannot contain
+  the file's *path*: the File System Access API never exposes one, and a page
+  can't turn a path into a handle even if it had it — so the id references the
+  handle already stored in IndexedDB, and the name keeps the link legible and
+  serves as a fallback. A link only resolves in a browser that has opened that
+  file before; elsewhere it explains itself and falls back to the picker.
+  Because file permission doesn't survive a page load, following a link
+  usually costs one click to re-grant it.
 - **Archive instead of delete.** The `×` on a card moves it to an `Archived`
   column with a `(deleted YYYY-MM-DD HH:MM)` timestamp appended to its title,
   rather than dropping it. The **Archive** tab lists archived cards
@@ -190,6 +201,7 @@ src/
   boardOps.ts        Pure Board -> Board operations (move, edit, tag, archive, restore, …)
   fileWriter.ts      Serialized, latest-wins writes to a file handle + save status
   recentFiles.ts     IndexedDB-backed recent files
+  boardUrl.ts        The `#<id>-<name>` board hash, and why it can't be a path
   themes.ts          The selectable themes and lenient theme-value parsing
   types.ts           Board / Column / Card / Setting / SaveStatus types
   file-system-access.d.ts  Type declarations for the File System Access API
@@ -214,5 +226,5 @@ npm run preview  # serve the production build locally
 npm run lint     # run ESLint
 ```
 
-Then open the dev server URL, click **Open kanban file**, and pick a `.txt`
-(try this repo's `kanban.txt`).
+Then open the dev server URL, click **Open kanban file**, and pick a `.txt` or
+`.md` file (try this repo's `kanban.md`).
