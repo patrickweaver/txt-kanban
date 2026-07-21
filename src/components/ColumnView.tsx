@@ -49,7 +49,14 @@ function Composer({ onAdd, onClose }: ComposerProps) {
       onBlur={() => commit(true)}
       onKeyDown={(e) => {
         // Enter commits and closes so focus flows into the new card's editor.
-        if (e.key === "Enter") commit(true);
+        // preventDefault is load-bearing: committing unmounts this input and
+        // focuses that description textarea within the same event, so Enter's
+        // default action would otherwise insert its newline there, opening the
+        // editor with a blank first line.
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit(true);
+        }
         if (e.key === "Escape") {
           setText("");
           onClose();

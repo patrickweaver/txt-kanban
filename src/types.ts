@@ -28,10 +28,20 @@ export interface Column {
   cards: Card[];
 }
 
+/** A `- Title: value` item in the `## Settings` section. */
+export interface Setting {
+  /** Title as written in the file (original casing), for round-trip. */
+  title: string;
+  value: string;
+}
+
 export interface Board {
   /** From the `# ` line; null if the file has none. */
   title: string | null;
   columns: Column[];
+  /** The `## Settings` section: board-level config, not shown on the board.
+   *  Unrecognized settings are preserved verbatim, like unknown card props. */
+  settings: Setting[];
 }
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";

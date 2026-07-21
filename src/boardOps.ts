@@ -139,6 +139,28 @@ export function moveColumn(board: Board, columnId: string, overColumnId: string)
   return { ...board, columns };
 }
 
+// --- Settings ("## Settings" section) ---
+
+/** Heading that holds board-level settings rather than cards. */
+export const SETTINGS_SECTION = "Settings";
+export const THEME_SETTING = "Theme";
+
+/** Value of a setting by title (case-insensitive); null when absent. */
+export function readSetting(board: Board, title: string): string | null {
+  const key = title.toLowerCase();
+  return board.settings.find((s) => s.title.toLowerCase() === key)?.value ?? null;
+}
+
+/** Updates a setting in place, or appends it; other settings are untouched. */
+export function writeSetting(board: Board, title: string, value: string): Board {
+  const key = title.toLowerCase();
+  const index = board.settings.findIndex((s) => s.title.toLowerCase() === key);
+  const settings = [...board.settings];
+  if (index >= 0) settings[index] = { ...settings[index], value };
+  else settings.push({ title, value });
+  return { ...board, settings };
+}
+
 // --- Archive ("Archived" column) ---
 
 const DELETED_AT_RE = /\s*\(deleted (\d{4}-\d{2}-\d{2} \d{2}:\d{2})\)\s*$/;

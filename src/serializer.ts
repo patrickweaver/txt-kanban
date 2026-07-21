@@ -1,4 +1,5 @@
 import type { Board } from "./types";
+import { SETTINGS_SECTION, isArchiveColumn } from "./boardOps";
 
 // Canonical output format: `# Title` (omitted when null), one `## Name` block
 // per column, cards renumbered 1., 2., ... Each card's properties follow as
@@ -17,7 +18,16 @@ export function serializeBoard(board: Board): string {
 
   if (board.title !== null) blocks.push(`# ${board.title}`);
 
+  // Settings sit after the active columns and before the archive.
+  let settingsWritten = board.settings.length === 0;
+  const writeSettings = () => {
+    blocks.push(`## ${SETTINGS_SECTION}`);
+    blocks.push(board.settings.map((s) => `- ${s.title}: ${s.value}`).join("\n"));
+    settingsWritten = true;
+  };
+
   for (const column of board.columns) {
+    if (!settingsWritten && isArchiveColumn(column)) writeSettings();
     blocks.push(`## ${column.name}`);
     const cardLines = column.cards.map((card, i) => {
       const marker = `${i + 1}. `;
@@ -35,6 +45,7 @@ export function serializeBoard(board: Board): string {
     });
     if (cardLines.length > 0) blocks.push(cardLines.join("\n"));
   }
+  if (!settingsWritten) writeSettings();
 
   return blocks.join("\n\n") + "\n";
 }

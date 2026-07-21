@@ -36,6 +36,8 @@ Mapping to the board:
 
 - `# ` — the board title (the first one wins; later `#` lines are ignored).
 - `## ` — a column. Cards that appear before the first `##` are ignored.
+- `## Settings` — the one reserved heading: board-level config rather than a
+  column, so it is never shown on the board (see [Settings](#settings)).
 - A top-level list item — a card title.
 - An indented list item — a `Title: value` **property** of the card above it.
   Three titles are known: `Description:` sets the card's description, `Date:`
@@ -137,6 +139,40 @@ An indented property whose title isn't `Description` or `Tags` is kept in the
 file untouched but shown on the card as an `Unknown Property: <title>` error, so
 a typo surfaces instead of silently disappearing.
 
+### Settings
+
+A `## Settings` section holds board-level configuration as `- Title: value`
+items. It lives between the active columns and `## Archived`, and the app
+writes it back in that position regardless of where you put it in the file:
+
+```
+## Settings
+
+- Theme: dark-boring
+```
+
+`Theme` is currently the only setting. Because it lives in the file, the theme
+travels with the board through source control instead of being a per-browser
+preference, and editing the line in a text editor re-themes the open app on the
+next poll. Values are read leniently — the id (`dark-boring`) or the label
+(`Dark Boring`) both work, in any casing — and whatever you typed is left
+as-is until you pick a theme in the UI. Settings the app doesn't recognize are
+preserved untouched, so the section is safe to extend by hand.
+
+There are two places a theme can come from, and they don't compete:
+
+- **The file**, for boards that set one. Picking a theme with a board open
+  writes it to that board's `## Settings`.
+- **A browser-local default**, for boards whose file says nothing. Picking a
+  theme on the start screen stores it in `localStorage` and it survives a
+  refresh — applied by a small inline script in `index.html` before first
+  paint, so there's no flash of the wrong theme on load.
+
+A per-board pick is never promoted to the local default, so theming one board
+doesn't silently change how every other unthemed board looks. Nothing is
+written to a file until you actually choose a theme, and an unreadable or
+unrecognized stored value falls back to the default rather than sticking.
+
 ### Browser support
 
 Reading, editing, and saving need the File System Access API, available in
@@ -154,7 +190,8 @@ src/
   boardOps.ts        Pure Board -> Board operations (move, edit, tag, archive, restore, …)
   fileWriter.ts      Serialized, latest-wins writes to a file handle + save status
   recentFiles.ts     IndexedDB-backed recent files
-  types.ts           Board / Column / Card / SaveStatus types
+  themes.ts          The selectable themes and lenient theme-value parsing
+  types.ts           Board / Column / Card / Setting / SaveStatus types
   file-system-access.d.ts  Type declarations for the File System Access API
   components/
     BoardView.tsx    The columns, drag-and-drop wiring, and tag filter bar

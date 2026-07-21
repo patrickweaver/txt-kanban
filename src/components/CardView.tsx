@@ -117,7 +117,10 @@ function TagComposer({ onAdd, onClose }: TagComposerProps) {
       onBlur={() => commit(true)}
       onKeyDown={(e) => {
         // Enter commits and keeps the composer open for rapid entry.
-        if (e.key === "Enter") commit(false);
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit(false);
+        }
         if (e.key === "Escape") {
           setText("");
           onClose();

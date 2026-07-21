@@ -1,8 +1,12 @@
 :root {
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
+  /* --bg is the page; --card-bg is the raised surface (cards, modals, inputs).
+     Themes keep the two distinct so cards read as lifted off the page. */
+  --bg: #faf9fb;
+  --card-bg: #fff;
   --border: #e5e4e7;
+  --border-width: 2px;
   --code-bg: #f4f3ec;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
@@ -30,11 +34,13 @@
   }
 }
 
+/* Fallback until React sets data-theme (and for any view that never does). */
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
-    --bg: #16171d;
+    --bg: #131419;
+    --card-bg: #1c1d25;
     --border: #2e303a;
     --code-bg: #1f2028;
     --accent: #c084fc;
@@ -50,12 +56,69 @@
   }
 }
 
+/* Selectable themes. `:root[data-theme]` outranks the media query above, so an
+   explicit choice wins over the OS preference in both directions. Ids match
+   THEMES in themes.ts. */
+
+/* Cranberry: light reddish-pink page, brighter cranberry columns, dark
+   cranberry borders. Cards keep --bg, so they read as lighter than a column. */
+:root[data-theme="cranberry"] {
+  /* Text is tuned for WCAG AAA (7:1) against the darkest surface it lands on,
+     the cranberry column background. */
+  --text: #5e2233;
+  --text-h: #2b0d16;
+  --bg: #fdeef2;
+  --card-bg: #fffafb;
+  --border: #a63c56;
+  --code-bg: #f7ccd6;
+  --accent: #850429;
+  --accent-bg: rgba(133, 4, 41, 0.1);
+  --accent-border: rgba(133, 4, 41, 0.5);
+  --shadow:
+    rgba(85, 10, 30, 0.12) 0 10px 15px -3px, rgba(85, 10, 30, 0.06) 0 4px 6px -2px;
+  color-scheme: light;
+}
+
+/* Boring: the original light theme with beige swapped for bluish gray and a
+   purplish blue highlight. */
+:root[data-theme="boring"] {
+  /* Darkened from #64748b: the more saturated column below drops the old value
+     under AA on `+ Add card` and tag chips. */
+  --text: #506078;
+  --text-h: #0e1729;
+  --bg: #f3f6fd;
+  --card-bg: #fff;
+  --border: #d5dff2;
+  --code-bg: #e0e9fa;
+  --accent: #4553e3;
+  --accent-bg: rgba(69, 83, 227, 0.1);
+  --accent-border: rgba(69, 83, 227, 0.5);
+  --shadow:
+    rgba(15, 23, 42, 0.1) 0 10px 15px -3px, rgba(15, 23, 42, 0.05) 0 4px 6px -2px;
+  color-scheme: light;
+}
+
+/* Dark Boring: standard dark, warmed slightly toward cranberry. */
+:root[data-theme="dark-boring"] {
+  --text: #a1949c;
+  --text-h: #f4eff1;
+  --bg: #121016;
+  --card-bg: #241f27;
+  --border: #4e4250;
+  --code-bg: #1b171d;
+  --accent: #ff6f91;
+  --accent-bg: rgba(255, 111, 145, 0.15);
+  --accent-border: rgba(255, 111, 145, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  color-scheme: dark;
+}
+
 #root {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -65,7 +128,6 @@
 /* An open board uses the full browser width; the start screen stays centered. */
 #root:has(.app) {
   width: 100%;
-  border-inline: none;
 }
 
 body {

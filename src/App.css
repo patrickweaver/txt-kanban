@@ -141,7 +141,6 @@
 
   .save-status {
     font-size: 14px;
-    margin-left: auto;
 
     button {
       font: inherit;
@@ -153,6 +152,30 @@
       cursor: pointer;
     }
   }
+}
+
+/* In the header this carries the auto margin, so it and the save status that
+   follows it both sit at the right edge. */
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+
+  select {
+    font: inherit;
+    font-size: 14px;
+    color: var(--text-h);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+}
+
+.app-header .theme-picker {
+  margin-left: auto;
 }
 
 .board {
@@ -171,7 +194,7 @@
   font-size: 15px;
   color: var(--text);
   background: none;
-  border: 1px dashed var(--border);
+  border: var(--border-width) dashed var(--border);
   border-radius: 8px;
   padding: 12px;
   cursor: pointer;
@@ -189,7 +212,7 @@
   flex: 0 0 300px;
   box-sizing: border-box;
   background: var(--code-bg);
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   border-radius: 8px;
   padding: 12px;
 }
@@ -294,8 +317,8 @@
 }
 
 .card {
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--border);
   border-radius: 6px;
   padding: 10px 12px;
   cursor: grab;
@@ -431,7 +454,7 @@
 .inline-edit {
   font: inherit;
   color: var(--text-h);
-  background: var(--bg);
+  background: var(--card-bg);
   border: 1px solid var(--accent-border);
   border-radius: 4px;
   padding: 2px 6px;
@@ -552,8 +575,8 @@ textarea.inline-edit {
 }
 
 .modal {
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--border);
   border-radius: 8px;
   box-shadow: var(--shadow);
   padding: 16px;

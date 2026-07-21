@@ -1,9 +1,13 @@
 import type { Board, Card, Column } from "./types";
+import { SETTINGS_SECTION } from "./boardOps";
 
 // Tolerance rules for the kanban .txt DSL:
 // - Line endings: \r\n, \r, and \n all accepted.
 // - `# ` sets the board title; the first one wins, later ones are ignored.
-// - `## ` starts a column. `###` and deeper headings are not part of the DSL.
+// - `## ` starts a column, except `## Settings` (any casing), which starts the
+//   board's settings section: its `- Title: value` items are board-level
+//   config, not cards, and it is not shown as a column.
+// - `###` and deeper headings are not part of the DSL.
 // - Cards accept `1.`, `1)`, `-`, and `*` markers. Numbers are discarded:
 //   order in the file is the order on the board.
 // - The first indented line under a card sets its property indent. List items
@@ -30,9 +34,10 @@ const PROPERTY = /^([A-Za-z][\w-]*):[ \t]*(.*)$/;
 const INDENT = /^[ \t]*/;
 
 export function parseBoard(text: string): Board {
-  const board: Board = { title: null, columns: [] };
+  const board: Board = { title: null, columns: [], settings: [] };
   let currentColumn: Column | null = null;
   let currentCard: Card | null = null;
+  let inSettings = false;
   // Indent width of the current card's property items; null until the first
   // indented line under the card sets it.
   let propIndent: number | null = null;
@@ -46,8 +51,14 @@ export function parseBoard(text: string): Board {
     if (line === "") continue;
 
     if (line.startsWith("## ")) {
-      currentColumn = { id: crypto.randomUUID(), name: line.slice(3).trim(), cards: [] };
+      const name = line.slice(3).trim();
       currentCard = null;
+      inSettings = name.toLowerCase() === SETTINGS_SECTION.toLowerCase();
+      if (inSettings) {
+        currentColumn = null;
+        continue;
+      }
+      currentColumn = { id: crypto.randomUUID(), name, cards: [] };
       board.columns.push(currentColumn);
       continue;
     }
@@ -61,7 +72,14 @@ export function parseBoard(text: string): Board {
 
     if (indent === "") {
       const item = LIST_ITEM.exec(line);
-      if (!item || !currentColumn) continue;
+      if (!item) continue;
+      if (inSettings) {
+        // Settings are `- Title: value` items; anything else is ignored.
+        const prop = PROPERTY.exec(item[2]);
+        if (prop) board.settings.push({ title: prop[1], value: prop[2] });
+        continue;
+      }
+      if (!currentColumn) continue;
       currentCard = {
         id: crypto.randomUUID(),
         title: item[2],

@@ -2,23 +2,18 @@
 
 ## Backlog
 
+1. Rename project "Cranban"
+   - Description: The project should have a fun and googlable name that goes with the theme.
+   - Date: 2026-07-21T04:16:05.871Z
+
 ## To Do
 
-1. Update Design
-   - Description: There should be 3 themes:
-     1. Default Cranberry
-        - This is a vaguely cranberry colored theme. The page background is a very light reddish pink, the borders are a dark cranberry, and the column backgrounds are a brighter cranberry.
-     2. Boring
-        - This is a light theme that is more boring than the current theme. The highlight color is a purplish blue. Update the other colors to be a bluish gray rather than beige, but otherwise similar to the current theme.
-     3. Dark Boring
-        - This is a standard dark theme, maybe slightly cranberryish.
-   - Date: 2026-07-17T04:49:18.627Z
-   - Tags: Design
-2. Save theme in markdown file
-   - Description: Themes should be more than a client setting.
-     Between the end of the lists of active cards and the "Archived" section of the markdown file, there should be a "Settings" section. This section is not populated as a list in the board.
-     Currently the only setting is the theme. This can be stored as an unordered list with titles like card titles are.
-   - Date: 2026-07-20T04:05:15.476Z
+1. Save local file path in URL Hash
+   - Description: The URL hash should be set to the file path of the file when one is opened. Navigating to that URL should open that file and skip the file picker.
+   - Date: 2026-07-21T04:28:37.733Z
+2. Switch Boards
+   - Description: Add a "Switch Boards" button that navigates back to the root URL and the file picker
+   - Date: 2026-07-21T04:36:23.346Z
 
 ## In progress
 
@@ -120,6 +115,44 @@
 34. Nested lists for descriptions
     - Description: I formatted the markdown file with nested lists, can we support this for descriptions rather than `\n`? Replaced the `\n` escapes: any line indented deeper than a card's property level now continues the description, keeping its own list marker and its indentation relative to the `- Description: ` content column, so nested markdown lists survive a round-trip. The serializer indents properties to the card's content column (3 spaces under `1. `, 4 under `10. `), matching what Prettier produces, so formatting the file and saving from the app converge. Blank lines can't be represented, so they are dropped on commit.
     - Date: 2026-07-20T05:12:00.000Z
+35. Bug: Description starts with empty line
+    - Description: When creating a new card in the UI, after hitting enter from the title input field, the description field becomes editable, but it starts with a blank line and the cursor on the second line. The card composer's Enter handler committed without calling preventDefault. Committing unmounts the title input and focuses the new card's description textarea within the same event, so Enter's default action inserted its newline into that textarea. The handler now calls preventDefault, matching what the inline title/description editor already did. (Enter's trailing trim on commit is why the blank line vanished on save.) The tag composer had the same missing preventDefault and got it too.
+    - Date: 2026-07-21T03:15:00.826Z
+36. Update Design
+    - Description: There should be 3 themes:
+      1. Default Cranberry
+         - This is a vaguely cranberry colored theme. The page background is a very light reddish pink, the borders are a dark cranberry, and the column backgrounds are a brighter cranberry.
+      2. Boring
+         - This is a light theme that is more boring than the current theme. The highlight color is a purplish blue. Update the other colors to be a bluish gray rather than beige, but otherwise similar to the current theme.
+      3. Dark Boring
+         - This is a standard dark theme, maybe slightly cranberryish.
+      First pass on the UI side only, with the choice held in React state (persisting it to the file is its own ticket). Each theme is a `:root[data-theme="<id>"]` block of the existing CSS variables in index.css, listed in themes.ts and applied by App to the root element. Attribute selectors outrank the prefers-color-scheme media query, so an explicit pick beats the OS setting in both directions, and each theme sets color-scheme so native controls follow. A Theme dropdown sits in the board header and on the start screen.
+    - Date: 2026-07-17T04:49:18.627Z
+    - Tags: Design
+37. Design Iterations
+    - Description: General:
+      - Make borders slightly thicker
+      - In all themes make the page background slightly different than the card background.
+      Cranberry:
+      - Make sure all text is WCAG AAA compliant.
+      Boring:
+      - Make the columns slightly more saturated with blue/purple color
+      Dark Boring:
+      - Make borders have slightly more contrast
+      Added two variables: --border-width (2px, used by cards, columns, modals and the add-column ghost) and --card-bg, so the page and the raised surfaces are distinct in every theme. Cranberry AAA was verified by auditing the rendered DOM rather than by eye: each text node's effective background is composited through its ancestors and checked against 7:1 (4.5:1 for large text). That found the accent-on-accent-tint active tab at 6.43:1, fixed by darkening the accent to the lightest value that clears 7:1 on all four surfaces (#850429). The audit also caught that saturating Boring's columns dropped `+ Add card` and tag chips to 3.95:1, under even AA, so its --text went to #556377. Cranberry now has zero AAA failures; Boring and Dark Boring pass AA everywhere.
+    - Date: 2026-07-21T04:04:00.810Z
+    - Tags: Design
+38. Save theme in markdown file
+    - Description: Themes should be more than a client setting.
+      Between the end of the lists of active cards and the "Archived" section of the markdown file, there should be a "Settings" section. This section is not populated as a list in the board.
+      Currently the only setting is the theme. This can be stored as an unordered list with titles like card titles are.
+      `## Settings` is now the one reserved heading: the parser routes it to board.settings instead of board.columns, so it can never render as a column, and the serializer always writes it back between the last active column and the archive. Settings are `- Title: value` items kept as an ordered list, so unrecognized ones round-trip untouched. Values are read leniently (id or label, any casing) and left as typed until the picker rewrites them. Picking a theme saves it; opening a file adopts its theme; an external edit to the line re-themes the app on the next poll. A file with no Theme keeps the current selection, and nothing is written until a theme is actually picked.
+    - Date: 2026-07-20T04:05:15.476Z
+39. Local default Theme
+    - Description: The theme selected on the file picker page should be saved in local storage and be the local default for new boards. On refresh it should be preserved.
+      Also rename "Default Cranberry" to just "Cranberry" since we are adding a local default.
+      Picking a theme on the start screen writes it to localStorage; picking one with a board open still goes to that file's Settings and deliberately does not touch the local default, so theming one board can't change how every other unthemed board looks. The stored theme is applied by an inline script in index.html before first paint, so a refresh doesn't flash the wrong theme. Unreadable storage (private mode) and unrecognized values fall back to the default rather than sticking. The old "Default Cranberry" label is kept as a resolver alias so files written or hand-edited before the rename still load.
+    - Date: 2026-07-21T04:26:56.373Z
 
 ## Archived
 
@@ -153,3 +186,7 @@
      - Yes
      - No
    - Date: 2026-07-21T03:12:38.386Z
+9. Test Card (deleted 2026-07-20 20:25)
+   - Description: yes it works now
+     Yes ok!
+   - Date: 2026-07-21T03:25:10.213Z

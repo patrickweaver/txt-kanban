@@ -5,6 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>txt-kanban</title>
+    <script>
+      // Apply the stored theme before first paint, so a refresh doesn't flash
+      // the default theme before React mounts. Key matches THEME_STORAGE_KEY
+      // in src/themes.ts; an unknown value is left to the app to sort out.
+      try {
+        var t = localStorage.getItem("kanban.theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

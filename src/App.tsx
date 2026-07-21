@@ -5,10 +5,18 @@ import { parseBoard } from "./parser";
 import { serializeBoard } from "./serializer";
 import { createFileWriter } from "./fileWriter";
 import type { FileWriter } from "./fileWriter";
-import { restoreCard } from "./boardOps";
+import { THEME_SETTING, readSetting, restoreCard, writeSetting } from "./boardOps";
 import { forgetFile, listRecentFiles, rememberFile } from "./recentFiles";
 import type { RecentFile } from "./recentFiles";
 import { useBoard } from "./useBoard";
+import {
+  DEFAULT_THEME,
+  THEMES,
+  readStoredTheme,
+  resolveThemeId,
+  writeStoredTheme,
+} from "./themes";
+import type { ThemeId } from "./themes";
 import BoardView from "./components/BoardView";
 import ArchiveView from "./components/ArchiveView";
 
@@ -32,6 +40,26 @@ function savedClockTime(ms: number): string {
 
 const supportsFilePicker = "showOpenFilePicker" in window;
 
+interface ThemePickerProps {
+  theme: ThemeId;
+  onChange: (theme: ThemeId) => void;
+}
+
+function ThemePicker({ theme, onChange }: ThemePickerProps) {
+  return (
+    <label className="theme-picker">
+      <span>Theme</span>
+      <select value={theme} onChange={(e) => onChange(e.target.value as ThemeId)}>
+        {THEMES.map(({ id, label }) => (
+          <option key={id} value={id}>
+            {label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function App() {
   const { board, boardRef, load, apply, restore } = useBoard();
   const [fileName, setFileName] = useState<string | null>(null);
@@ -42,6 +70,9 @@ function App() {
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [recents, setRecents] = useState<RecentFile[]>([]);
   const [view, setView] = useState<"board" | "archive">("board");
+  // Mirrors the file's `Theme` setting once a board is open; before that (and
+  // for files that set no theme) it is the browser-local default.
+  const [theme, setTheme] = useState<ThemeId>(() => readStoredTheme() ?? DEFAULT_THEME);
   // The file text this app last loaded or wrote; polling compares against it
   // so our own saves are not mistaken for external edits.
   const lastTextRef = useRef<string | null>(null);
@@ -51,6 +82,12 @@ function App() {
   useEffect(() => {
     if (supportsFilePicker) void listRecentFiles().then(setRecents);
   }, []);
+
+  // The theme is a document-level concern (page background, form controls), so
+  // it lives on the root element rather than on the app subtree.
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   // The File System Access API has no change events, so poll the handle and
   // reload the board when the file is edited externally (e.g. a text editor).
@@ -81,7 +118,11 @@ function App() {
           lastModified = file.lastModified;
           if (text !== lastTextRef.current) {
             lastTextRef.current = text;
-            load(parseBoard(text));
+            const parsed = parseBoard(text);
+            load(parsed);
+            // An externally edited Theme setting applies immediately.
+            const fromFile = resolveThemeId(readSetting(parsed, THEME_SETTING) ?? "");
+            if (fromFile) setTheme(fromFile);
           }
         }
       } catch {
@@ -112,6 +153,10 @@ function App() {
     setView("board");
     lastTextRef.current = text;
     load(parsed);
+    // A file without a Theme setting keeps whatever is already selected,
+    // rather than resetting the user's choice.
+    const fromFile = resolveThemeId(readSetting(parsed, THEME_SETTING) ?? "");
+    if (fromFile) setTheme(fromFile);
     void rememberFile(handle, parsed.title).then(listRecentFiles).then(setRecents);
   }
 
@@ -160,7 +205,22 @@ function App() {
     setSaveStatus("idle");
     setOpenError(null);
     lastTextRef.current = text;
-    load(parseBoard(text));
+    const parsed = parseBoard(text);
+    load(parsed);
+    const fromFile = resolveThemeId(readSetting(parsed, THEME_SETTING) ?? "");
+    if (fromFile) setTheme(fromFile);
+  }
+
+  /**
+   * Applies the theme. With a board open it goes to that file's Settings
+   * section (read-only boards update in memory only, since save is a no-op
+   * without a writer); on the start screen it sets this browser's default for
+   * boards whose file specifies no theme.
+   */
+  function changeTheme(next: ThemeId): void {
+    setTheme(next);
+    if (boardRef.current) save(apply((b) => writeSetting(b, THEME_SETTING, next)));
+    else writeStoredTheme(next);
   }
 
   function save(next: Board): void {
@@ -213,6 +273,7 @@ function App() {
             />
           </>
         )}
+        <ThemePicker theme={theme} onChange={changeTheme} />
       </section>
     );
   }
@@ -236,6 +297,7 @@ function App() {
             Archive
           </button>
         </nav>
+        <ThemePicker theme={theme} onChange={changeTheme} />
         {readOnly ? (
           <span className="save-status">
             Read-only — editing and saving require Chrome or Edge
