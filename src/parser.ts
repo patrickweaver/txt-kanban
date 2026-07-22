@@ -1,13 +1,16 @@
 import type { Board, Card, Column } from "./types";
-import { SETTINGS_SECTION } from "./boardOps";
+import { ABOUT_SECTION, SETTINGS_SECTION } from "./boardOps";
 
 // Tolerance rules for the kanban .txt DSL:
 // - Line endings: \r\n, \r, and \n all accepted.
 // - `# ` sets the board title; the first one wins, later ones are ignored.
-// - `## ` starts a column, except `## Settings` (any casing), which starts the
-//   board's settings section: its `- Title: value` items are board-level
-//   config, not cards, and it is not shown as a column.
-// - `###` and deeper headings are not part of the DSL.
+// - `## ` starts a column, with two reserved exceptions (any casing), neither
+//   of which is shown as a column:
+//     * `## Settings` — `- Title: value` items of board-level config.
+//     * `## About Cranban` — free-form prose explaining the format, captured
+//       verbatim and written back untouched. A fenced code block inside it may
+//       contain `## ` lines of its own, so fences suspend heading detection.
+// - `###` and deeper headings are not part of the DSL (outside About).
 // - Cards accept `1.`, `1)`, `-`, and `*` markers. Numbers are discarded:
 //   order in the file is the order on the board.
 // - The first indented line under a card sets its property indent. List items
@@ -32,12 +35,15 @@ const LIST_ITEM = /^([ \t]*)(?:\d+[.)]|[-*])[ \t]+(.*)$/;
 // A property title is a single token (no whitespace) before the first colon.
 const PROPERTY = /^([A-Za-z][\w-]*):[ \t]*(.*)$/;
 const INDENT = /^[ \t]*/;
+const FENCE = /^\s*(?:```|~~~)/;
 
 export function parseBoard(text: string): Board {
-  const board: Board = { title: null, columns: [], settings: [] };
+  const board: Board = { title: null, columns: [], settings: [], about: [] };
   let currentColumn: Column | null = null;
   let currentCard: Card | null = null;
   let inSettings = false;
+  let inAbout = false;
+  let inFence = false;
   // Indent width of the current card's property items; null until the first
   // indented line under the card sets it.
   let propIndent: number | null = null;
@@ -48,13 +54,27 @@ export function parseBoard(text: string): Board {
 
   for (const rawLine of text.split(/\r\n|\r|\n/)) {
     const line = rawLine.trimEnd();
+
+    // About is prose: take every line as written, blank lines included, until
+    // the next heading. Fenced blocks can hold `## ` lines, so a fence
+    // suspends heading detection rather than ending the section early.
+    if (inAbout) {
+      if (FENCE.test(line)) inFence = !inFence;
+      if (inFence || !line.startsWith("## ")) {
+        board.about.push(line);
+        continue;
+      }
+      inAbout = false;
+    }
+
     if (line === "") continue;
 
     if (line.startsWith("## ")) {
       const name = line.slice(3).trim();
       currentCard = null;
       inSettings = name.toLowerCase() === SETTINGS_SECTION.toLowerCase();
-      if (inSettings) {
+      inAbout = name.toLowerCase() === ABOUT_SECTION.toLowerCase();
+      if (inSettings || inAbout) {
         currentColumn = null;
         continue;
       }
@@ -129,6 +149,11 @@ export function parseBoard(text: string): Board {
       currentCard.unknownProps.push({ title, value });
     }
   }
+
+  // Blank lines around the About body are layout, not content; the serializer
+  // re-adds them, so dropping them here keeps the round-trip exact.
+  while (board.about.length > 0 && board.about[0] === "") board.about.shift();
+  while (board.about.length > 0 && board.about[board.about.length - 1] === "") board.about.pop();
 
   return board;
 }

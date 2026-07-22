@@ -69,9 +69,31 @@ export function removeTag(board: Board, cardId: string, index: number): Board {
   });
 }
 
+/**
+ * Why a name can't be used for a column, or null if it can.
+ *
+ * These headings mean something other than "column" in the file, so a column
+ * using one looks fine until the next load: it is written as `## <name>` and
+ * read back as the reserved section, taking its cards with it.
+ */
+export function reservedColumnReason(name: string): string | null {
+  const trimmed = name.trim();
+  const key = trimmed.toLowerCase();
+  if (key === SETTINGS_SECTION.toLowerCase()) {
+    return `“${SETTINGS_SECTION}” is reserved for board settings.`;
+  }
+  if (key === ABOUT_SECTION.toLowerCase()) {
+    return `“${ABOUT_SECTION}” is reserved for the About section.`;
+  }
+  if (isArchiveName(trimmed)) {
+    return `“${trimmed}” is reserved for archived cards — see the Archive tab.`;
+  }
+  return null;
+}
+
 export function addColumn(board: Board, name: string): Board {
   const trimmed = name.trim();
-  if (trimmed === "") return board;
+  if (trimmed === "" || reservedColumnReason(trimmed) !== null) return board;
   const column: Column = { id: crypto.randomUUID(), name: trimmed, cards: [] };
   // Keep any archive column last so it stays at the bottom of the file.
   const archiveIndex = board.columns.findIndex(isArchiveColumn);
@@ -145,6 +167,13 @@ export function moveColumn(board: Board, columnId: string, overColumnId: string)
 export const SETTINGS_SECTION = "Settings";
 export const THEME_SETTING = "Theme";
 
+/**
+ * Heading that holds the human- and agent-facing explanation of the format.
+ * Like Settings it is never a column; unlike Settings its body is free-form
+ * prose, so it is kept verbatim and written back untouched.
+ */
+export const ABOUT_SECTION = "About Cranban";
+
 /** Value of a setting by title (case-insensitive); null when absent. */
 export function readSetting(board: Board, title: string): string | null {
   const key = title.toLowerCase();
@@ -170,9 +199,13 @@ const DELETED_AT_RE = /\s*\(deleted (\d{4}-\d{2}-\d{2} \d{2}:\d{2})\)\s*$/;
  * New columns are created as "Archived"; "Deleted" is still recognized for
  * files written before the rename.
  */
+export function isArchiveName(name: string): boolean {
+  const key = name.trim().toLowerCase();
+  return key === "archived" || key === "deleted";
+}
+
 export function isArchiveColumn(column: Column): boolean {
-  const name = column.name.trim().toLowerCase();
-  return name === "archived" || name === "deleted";
+  return isArchiveName(column.name);
 }
 
 /** Local-time `YYYY-MM-DD HH:MM`. */

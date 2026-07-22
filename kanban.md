@@ -2,20 +2,8 @@
 
 ## Backlog
 
-1. Seed empty files
-   - Description: If an empty file is opened create a default empty "To Do" list
-     Also add a "Cranban Board" top level header.
-   - Date: 2026-07-21T04:38:32.453Z
-2. Add explanation prompt to board
-   - Description: A new board should have a short agent-facing prompt explaining how the project works with examples of syntax.
-   - Date: 2026-07-21T04:57:35.660Z
-3. Explanation
-   - Description: Add an explanation to the default page before any files are selected
-   - Date: 2026-07-21T04:58:38.663Z
-4. Update favicon
+1. Update favicon
    - Date: 2026-07-21T04:59:04.797Z
-5. Create a default list as a downloadable file
-   - Date: 2026-07-21T04:59:30.387Z
 
 ## To Do
 
@@ -130,20 +118,20 @@
          - This is a light theme that is more boring than the current theme. The highlight color is a purplish blue. Update the other colors to be a bluish gray rather than beige, but otherwise similar to the current theme.
       3. Dark Boring
          - This is a standard dark theme, maybe slightly cranberryish.
-      First pass on the UI side only, with the choice held in React state (persisting it to the file is its own ticket). Each theme is a `:root[data-theme="<id>"]` block of the existing CSS variables in index.css, listed in themes.ts and applied by App to the root element. Attribute selectors outrank the prefers-color-scheme media query, so an explicit pick beats the OS setting in both directions, and each theme sets color-scheme so native controls follow. A Theme dropdown sits in the board header and on the start screen.
+           First pass on the UI side only, with the choice held in React state (persisting it to the file is its own ticket). Each theme is a `:root[data-theme="<id>"]` block of the existing CSS variables in index.css, listed in themes.ts and applied by App to the root element. Attribute selectors outrank the prefers-color-scheme media query, so an explicit pick beats the OS setting in both directions, and each theme sets color-scheme so native controls follow. A Theme dropdown sits in the board header and on the start screen.
     - Date: 2026-07-17T04:49:18.627Z
     - Tags: Design
 37. Design Iterations
     - Description: General:
       - Make borders slightly thicker
       - In all themes make the page background slightly different than the card background.
-      Cranberry:
+        Cranberry:
       - Make sure all text is WCAG AAA compliant.
-      Boring:
+        Boring:
       - Make the columns slightly more saturated with blue/purple color
-      Dark Boring:
+        Dark Boring:
       - Make borders have slightly more contrast
-      Added two variables: --border-width (2px, used by cards, columns, modals and the add-column ghost) and --card-bg, so the page and the raised surfaces are distinct in every theme. Cranberry AAA was verified by auditing the rendered DOM rather than by eye: each text node's effective background is composited through its ancestors and checked against 7:1 (4.5:1 for large text). That found the accent-on-accent-tint active tab at 6.43:1, fixed by darkening the accent to the lightest value that clears 7:1 on all four surfaces (#850429). The audit also caught that saturating Boring's columns dropped `+ Add card` and tag chips to 3.95:1, under even AA, so its --text went to #556377. Cranberry now has zero AAA failures; Boring and Dark Boring pass AA everywhere.
+        Added two variables: --border-width (2px, used by cards, columns, modals and the add-column ghost) and --card-bg, so the page and the raised surfaces are distinct in every theme. Cranberry AAA was verified by auditing the rendered DOM rather than by eye: each text node's effective background is composited through its ancestors and checked against 7:1 (4.5:1 for large text). That found the accent-on-accent-tint active tab at 6.43:1, fixed by darkening the accent to the lightest value that clears 7:1 on all four surfaces (#850429). The audit also caught that saturating Boring's columns dropped `+ Add card` and tag chips to 3.95:1, under even AA, so its --text went to #556377. Cranberry now has zero AAA failures; Boring and Dark Boring pass AA everywhere.
     - Date: 2026-07-21T04:04:00.810Z
     - Tags: Design
 38. Save theme in markdown file
@@ -169,6 +157,65 @@
     - Description: The project should have a fun and googlable name that goes with the theme.
       Renamed everywhere the name is identity: the page title, the start screen heading, the default board title, package.json, README and CLAUDE.md. Deliberately not renamed: the IndexedDB database and the localStorage theme key, since changing those would orphan every stored file handle (losing recents and breaking the `#<id>-<name>` board links) and discard the saved theme. Both now carry comments saying so, and CLAUDE.md records the reasoning. Generic uses of "kanban" for the file format and the board concept were left alone.
     - Date: 2026-07-21T04:16:05.871Z
+43. Seed empty files
+    - Description: If an empty file is opened create a default empty "To Do" list
+      Also add a "Cranban Board" top level header.
+      Opening a file that is empty or whitespace-only writes the starter board to it and opens that. A file that merely fails to parse is left alone, so nothing is ever overwritten.
+    - Date: 2026-07-21T04:38:32.453Z
+44. Explanation
+    - Description: Add a user-facing explanation to the default page before any files are selected, this is duplicated in the markdown file under an H2, "About Cranban" -> H3, "Human Users"
+      The copy lives once in starterBoard.ts, rendered as paragraphs on the start screen and written into the file's Human Users subsection, so the two cannot drift.
+    - Date: 2026-07-21T04:58:38.663Z
+45. Add explanation prompt to board
+    - Description: A new board's markdown file should have a short agent-facing prompt explaining how the project works with examples of syntax.
+      This is not rendered on the frontend. Put this under an H2, "About Cranban" -> H3, "LLM Users"
+      `## About Cranban` is now a reserved heading alongside `## Settings`: never a column, and since its body is free-form prose it is captured verbatim into board.about and written back untouched. Fenced code blocks suspend heading detection, so the syntax example's own `## To Do` line cannot be mistaken for a column. The section is written after the active columns, before Settings and Archived.
+    - Date: 2026-07-21T04:57:35.660Z
+46. Create a default list as a downloadable file
+    - Description: There should be an easy to download file provided on the start page so that the user doesn't have to create a file to get started.
+      A "Download a starter board" button on the start screen saves the same template as cranban.md.
+    - Date: 2026-07-21T04:59:30.387Z
+47. Bug: Prevent creating disallowed columns
+    - Description: Creating a "Settings" column seems to work on the frontend, but on refresh is cleared.
+      The name is written as `## Settings` and read back as the reserved section, so the column and any cards in it were swallowed on the next load. The same applied to "About Cranban", and to "Archived"/"Deleted", which silently became a second archive hidden from the board. A reservedColumnReason helper now names the conflict; addColumn refuses those names outright, and the new-column dialog shows the reason and disables Save (Enter is blocked too) while one is typed.
+    - Date: 2026-07-22T04:46:30.643Z
+
+## About Cranban
+
+### Human Users
+
+Cranban turns a plain markdown file into a kanban board. The file lives in your project, so the board is versioned with your code, shows up in pull requests, and stays readable in any text editor. No account, no server, no database.
+
+Columns are ## headings and cards are the list items under them. Indent a line beneath a card to give it a description, a date, or tags. Everything you do here is written straight back to the file, and edits you make in your editor appear here within a second.
+
+Open a .txt or .md file to begin, or download a starter board to get going.
+
+### LLM Users
+
+This file is a Cranban board. Edit it directly; the app reads and writes this same file.
+
+- `# ` is the board title. The first one wins.
+- `## ` starts a column. Order in the file is order on the board.
+- A top-level list item is a card. `1.`, `1)`, `-`, and `*` all work, and the numbers are cosmetic.
+- An indented `- Title: value` item under a card sets a property. `Description`, `Date`, and `Tags` are known; any other title is preserved but flagged in the UI as an unknown property, so a typo surfaces instead of vanishing.
+- A description can span lines: indent continuation lines past the `- Description: ` column and they keep their own markers, so a nested list survives.
+- Two headings are reserved and never render as columns: `## Settings` (board config, currently just `- Theme:`) and this `## About Cranban` section. `## Archived` holds removed cards.
+
+Example:
+
+```
+# Cranban Board
+
+## To Do
+
+1. Load file in web app
+   - Description: Parse the markdown into columns and cards.
+     Continuation lines are indented past the Description column.
+   - Date: 2026-01-31T09:00:00.000Z
+   - Tags: filesystem, parser
+```
+
+Saving rewrites the file in a canonical form: cards renumbered, properties ordered Description, Date, Tags, and indented to the card's content column. Keep edits in that shape and the diff stays small.
 
 ## Settings
 
@@ -197,10 +244,10 @@
 8. Test Multi Line Card (deleted 2026-07-20 20:14)
    - Description: This is a test card with multiple lines.
      1. This is a list
-         - With sublists
+        - With sublists
      2. This is the second item.
-     What about another list?
-     1. What if I don't indent?
+        What about another list?
+     3. What if I don't indent?
      - OK no indent
      2. Hello
      - Yes

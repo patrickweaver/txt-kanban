@@ -10,6 +10,7 @@ import { forgetFile, getRecentFile, listRecentFiles, rememberFile } from "./rece
 import type { RecentFile } from "./recentFiles";
 import { boardHash, parseBoardHash } from "./boardUrl";
 import type { BoardRef } from "./boardUrl";
+import { HUMAN_INTRO, STARTER_FILE_NAME, starterBoardText } from "./starterBoard";
 import { useBoard } from "./useBoard";
 import {
   DEFAULT_THEME,
@@ -165,14 +166,19 @@ function App() {
 
   async function openHandle(handle: FileSystemFileHandle): Promise<void> {
     const file = await handle.getFile();
-    const text = await file.text();
+    const original = await file.text();
+    // An empty file has nothing to lose, so seed it with the starter board
+    // rather than dropping the user on a blank screen. Only whitespace counts
+    // as empty: a file we merely failed to parse keeps its contents.
+    const seeding = original.trim() === "";
+    const text = seeding ? starterBoardText() : original;
     const parsed = parseBoard(text);
-    setWriter(
-      createFileWriter(handle, (status) => {
-        setSaveStatus(status);
-        if (status === "saved") setSavedAt(Date.now());
-      })
-    );
+    const nextWriter = createFileWriter(handle, (status) => {
+      setSaveStatus(status);
+      if (status === "saved") setSavedAt(Date.now());
+    });
+    setWriter(nextWriter);
+    if (seeding) nextWriter.save(text);
     setFileHandle(handle);
     setFileName(handle.name);
     setSaveStatus("idle");
@@ -302,6 +308,19 @@ function App() {
     void listRecentFiles().then(setRecents);
   }
 
+  /** Offers the starter board as a file, so a new user has something to open. */
+  function downloadStarter(): void {
+    const url = URL.createObjectURL(
+      new Blob([starterBoardText()], { type: "text/markdown" })
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = STARTER_FILE_NAME;
+    link.click();
+    // Revoking in the same tick can cancel the download in some browsers.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   /** Back to the picker at the root URL; the file stays in recents. */
   function switchBoards(): void {
     ownHashRef.current = "";
@@ -351,9 +370,25 @@ function App() {
   }
 
   if (board === null) {
+    // The same copy is written into the file's "Human Users" section, so the
+    // page and a downloaded board always say the same thing.
+    const intro = (
+      <div className="intro">
+        {HUMAN_INTRO.map((paragraph) => (
+          <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+        ))}
+      </div>
+    );
+    const starterDownload = (
+      <button className="download-button" onClick={downloadStarter}>
+        Download a starter board
+      </button>
+    );
+
     return (
       <section id="center">
         <h1>Cranban</h1>
+        {intro}
         {openError && <p className="open-error">{openError}</p>}
         {supportsFilePicker ? (
           <>
@@ -368,9 +403,12 @@ function App() {
                 </p>
               </div>
             )}
-            <button className="open-button" onClick={openFile}>
-              Open kanban file
-            </button>
+            <div className="start-actions">
+              <button className="open-button" onClick={openFile}>
+                Open kanban file
+              </button>
+              {starterDownload}
+            </div>
             {recents.length > 0 && (
               <div className="recent-files">
                 <h2>Recent files</h2>
@@ -397,6 +435,7 @@ function App() {
               accept=".txt,.md,text/plain,text/markdown"
               onChange={handleFileSelect}
             />
+            {starterDownload}
           </>
         )}
         <ThemePicker theme={theme} onChange={changeTheme} />

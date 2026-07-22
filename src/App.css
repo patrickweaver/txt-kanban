@@ -35,6 +35,45 @@
   color: var(--accent);
 }
 
+/* The start-screen explanation; same copy as the file's "Human Users" section. */
+.intro {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  font-size: 16px;
+}
+
+.start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Secondary to "Open kanban file": same shape, quieter fill. */
+.download-button {
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+
+  &:hover {
+    color: var(--text-h);
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
 /* The board a URL points at, waiting on a click to re-grant file permission. */
 .pending-board {
   display: flex;
@@ -628,6 +667,11 @@ textarea.inline-edit {
 .modal-message {
   font-size: 15px;
   color: var(--text);
+}
+
+.modal-error {
+  font-size: 13px;
+  color: var(--accent);
 }
 
 .modal-actions {

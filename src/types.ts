@@ -42,6 +42,9 @@ export interface Board {
   /** The `## Settings` section: board-level config, not shown on the board.
    *  Unrecognized settings are preserved verbatim, like unknown card props. */
   settings: Setting[];
+  /** Raw lines of the `## About Cranban` section, kept verbatim so the
+   *  explanation survives a save. Never rendered on the board. */
+  about: string[];
 }
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";

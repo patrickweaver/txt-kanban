@@ -36,8 +36,10 @@ Mapping to the board:
 
 - `# ` — the board title (the first one wins; later `#` lines are ignored).
 - `## ` — a column. Cards that appear before the first `##` are ignored.
-- `## Settings` — the one reserved heading: board-level config rather than a
-  column, so it is never shown on the board (see [Settings](#settings)).
+- `## Settings` and `## About Cranban` — the two reserved headings. Neither is
+  a column, so neither is shown on the board: Settings holds board-level config
+  (see [Settings](#settings)), and About Cranban holds the explanation of the
+  format written into new boards (see [Getting started](#getting-started)).
 - A top-level list item — a card title.
 - An indented list item — a `Title: value` **property** of the card above it.
   Three titles are known: `Description:` sets the card's description, `Date:`
@@ -122,7 +124,10 @@ converge on the same clean layout.
   newest-first and can restore them (the timestamp is stripped on restore). An
   older `Deleted` column name is still recognized for backward compatibility.
   Empty columns show their own `×` (with a confirm dialog); removing a column
-  is permanent — columns have no archive.
+  is permanent — columns have no archive. A new column can't be named after a
+  reserved heading (`Settings`, `About Cranban`, `Archived`/`Deleted`): the
+  dialog explains why and Save stays disabled, since such a column would be
+  written as that section and read back as one on the next load.
 - **Drag, drop, and inline edit.** Cards drag within and between columns
   (pointer or keyboard, via [@dnd-kit](https://dndkit.com)); columns reorder by
   dragging their header, and the new order is written back to the file. Click a
@@ -149,6 +154,25 @@ couldn't be preserved in the `.txt`.
 An indented property whose title isn't `Description` or `Tags` is kept in the
 file untouched but shown on the card as an `Unknown Property: <title>` error, so
 a typo surfaces instead of silently disappearing.
+
+### Getting started
+
+The start screen explains what Cranban is and offers **Download a starter
+board** (`cranban.md`), so there is something to open without hand-writing a
+file first. Opening a file that is empty (or only whitespace) seeds it with
+that same starter board instead of dropping you on a blank screen — a file
+that merely fails to parse is never overwritten.
+
+The starter board is a title, an empty `## To Do`, and an `## About Cranban`
+section with two subsections: **Human Users**, the same copy the start screen
+shows, and **LLM Users**, a short prompt describing the syntax for coding
+agents editing the file directly. All of it comes from one template in
+`starterBoard.ts`, so the page and the file can't drift apart.
+
+`## About Cranban` is free-form prose rather than board data, so it is captured
+verbatim and written back untouched — including fenced code blocks, whose
+`##` example lines are protected from being read as column headings. It is
+never rendered in the app.
 
 ### Settings
 
@@ -202,6 +226,7 @@ src/
   fileWriter.ts      Serialized, latest-wins writes to a file handle + save status
   recentFiles.ts     IndexedDB-backed recent files
   boardUrl.ts        The `#<id>-<name>` board hash, and why it can't be a path
+  starterBoard.ts    The starter board: seed, download, and start-screen copy
   themes.ts          The selectable themes and lenient theme-value parsing
   types.ts           Board / Column / Card / Setting / SaveStatus types
   file-system-access.d.ts  Type declarations for the File System Access API

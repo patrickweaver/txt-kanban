@@ -1,8 +1,9 @@
 import type { Board } from "./types";
-import { SETTINGS_SECTION, isArchiveColumn } from "./boardOps";
+import { ABOUT_SECTION, SETTINGS_SECTION, isArchiveColumn } from "./boardOps";
 
 // Canonical output format: `# Title` (omitted when null), one `## Name` block
-// per column, cards renumbered 1., 2., ... Each card's properties follow as
+// per column (plus the reserved `## About Cranban` and `## Settings` sections,
+// written after the active columns), cards renumbered 1., 2., ... Each card's properties follow as
 // `- Title: value` items indented to the card's content column (3 spaces
 // under `1. `, 4 under `10. ` — the same alignment markdown formatters use),
 // in a fixed order: a single `Description:` item, a `Date:` line, a single
@@ -18,16 +19,23 @@ export function serializeBoard(board: Board): string {
 
   if (board.title !== null) blocks.push(`# ${board.title}`);
 
-  // Settings sit after the active columns and before the archive.
-  let settingsWritten = board.settings.length === 0;
-  const writeSettings = () => {
-    blocks.push(`## ${SETTINGS_SECTION}`);
-    blocks.push(board.settings.map((s) => `- ${s.title}: ${s.value}`).join("\n"));
-    settingsWritten = true;
+  // About and Settings sit after the active columns and before the archive,
+  // so the board itself stays at the top of the file.
+  let extrasWritten = board.settings.length === 0 && board.about.length === 0;
+  const writeExtras = () => {
+    if (board.about.length > 0) {
+      blocks.push(`## ${ABOUT_SECTION}`);
+      blocks.push(board.about.join("\n"));
+    }
+    if (board.settings.length > 0) {
+      blocks.push(`## ${SETTINGS_SECTION}`);
+      blocks.push(board.settings.map((s) => `- ${s.title}: ${s.value}`).join("\n"));
+    }
+    extrasWritten = true;
   };
 
   for (const column of board.columns) {
-    if (!settingsWritten && isArchiveColumn(column)) writeSettings();
+    if (!extrasWritten && isArchiveColumn(column)) writeExtras();
     blocks.push(`## ${column.name}`);
     const cardLines = column.cards.map((card, i) => {
       const marker = `${i + 1}. `;
@@ -45,7 +53,7 @@ export function serializeBoard(board: Board): string {
     });
     if (cardLines.length > 0) blocks.push(cardLines.join("\n"));
   }
-  if (!settingsWritten) writeSettings();
+  if (!extrasWritten) writeExtras();
 
   return blocks.join("\n\n") + "\n";
 }
