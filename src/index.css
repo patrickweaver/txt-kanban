@@ -163,7 +163,6 @@ p {
   margin: 0;
 }
 
-code,
 .counter {
   font-family: var(--mono);
   display: inline-flex;
@@ -171,9 +170,13 @@ code,
   color: var(--text-h);
 }
 
+/* Inline code inside prose: stays on the text baseline and keeps its padding
+   small enough not to open up the line boxes around it. */
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 0.85em;
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--text-h);
   background: var(--code-bg);
 }

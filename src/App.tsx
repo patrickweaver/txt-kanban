@@ -41,7 +41,23 @@ function savedClockTime(ms: number): string {
   });
 }
 
+// The intro copy is also written into the file, so it carries markdown
+// backticks. Inline code is the only span markup it uses; an unpaired backtick
+// falls through as literal text.
+function withInlineCode(text: string) {
+  return text
+    .split(/`([^`]+)`/)
+    .map((part, i) => (i % 2 === 0 ? part : <code key={i}>{part}</code>));
+}
+
 const supportsFilePicker = "showOpenFilePicker" in window;
+
+// The favicon, reused as the wordmark next to both headings. It lives in
+// public/, so it needs BASE_URL to survive a build served from a subdirectory.
+// Decorative: the heading beside it already carries the name, so alt is empty.
+function TitleIcon() {
+  return <img className="title-icon" src={`${import.meta.env.BASE_URL}icon.png`} alt="" />;
+}
 
 interface ThemePickerProps {
   theme: ThemeId;
@@ -375,7 +391,7 @@ function App() {
     const intro = (
       <div className="intro">
         {HUMAN_INTRO.map((paragraph) => (
-          <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+          <p key={paragraph.slice(0, 24)}>{withInlineCode(paragraph)}</p>
         ))}
       </div>
     );
@@ -387,7 +403,10 @@ function App() {
 
     return (
       <section id="center">
-        <h1>Cranban</h1>
+        <h1>
+          <TitleIcon />
+          Cranban
+        </h1>
         {intro}
         {openError && <p className="open-error">{openError}</p>}
         {supportsFilePicker ? (
@@ -446,7 +465,10 @@ function App() {
   return (
     <main className="app">
       <header className="app-header">
-        <h1 className="board-title">{board.title ?? "Cranban"}</h1>
+        <h1 className="board-title">
+          <TitleIcon />
+          {board.title ?? "Cranban"}
+        </h1>
         <span className="file-name">{fileName}</span>
         <nav className="tabs">
           <button

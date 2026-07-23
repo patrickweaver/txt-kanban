@@ -140,6 +140,15 @@
   }
 }
 
+/* The favicon set beside a heading, on the start screen and in the board
+   header. Sized in em so it tracks whichever heading it sits in. */
+.title-icon {
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.28em;
+  vertical-align: -0.1em;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -158,6 +167,9 @@
     font-size: 32px;
     letter-spacing: -0.5px;
     margin: 24px 0 20px;
+    /* A narrow header would otherwise shrink the title to its min-content
+       width, which breaks the line between the icon and the first word. */
+    flex-shrink: 0;
   }
 
   .file-name {

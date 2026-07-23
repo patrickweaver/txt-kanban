@@ -8,7 +8,7 @@ any text editor — no database, no account, no server.
 The file is Markdown-ish: `##` headings are columns and list items are cards.
 It keeps the `.txt` extension on purpose, so the format stays free to grow its
 own conventions beyond standard Markdown — though `.md` files are accepted too
-and treated identically. This repo's own `kanban.md` is a working example.
+and treated identically. This repo's own `cranban.md` is a working example.
 
 ## The file format
 
@@ -252,4 +252,4 @@ npm run lint     # run ESLint
 ```
 
 Then open the dev server URL, click **Open kanban file**, and pick a `.txt` or
-`.md` file (try this repo's `kanban.md`).
+`.md` file (try this repo's `cranban.md`).

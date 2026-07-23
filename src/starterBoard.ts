@@ -9,9 +9,8 @@ export const STARTER_TITLE = "Cranban Board";
 
 /** Shown on the start screen and written to the "Human Users" section. */
 export const HUMAN_INTRO: string[] = [
-  "Cranban turns a plain markdown file into a kanban board. The file lives in your project, so the board is versioned with your code, shows up in pull requests, and stays readable in any text editor. No account, no server, no database.",
-  "Columns are ## headings and cards are the list items under them. Indent a line beneath a card to give it a description, a date, or tags. Everything you do here is written straight back to the file, and edits you make in your editor appear here within a second.",
-  "Open a .txt or .md file to begin, or download a starter board to get going.",
+  "Cranban is a local-first (and only) kanban board UI with a `.md` file as the datastore. The file lives on your computer, or in your git repo, and is updated live when cards move or update on the board.",
+  "Markdown with a local web UI is a great fit for collaborating with robots. You can update the to-dos in the UI, the robot can update the to-dos in the `.md` file, and both sides see the same updates in real time. Create a file, or download the starter board below to try it out!",
 ];
 
 // Agent-facing. Only ever written to the file; never rendered in the app.
@@ -40,6 +39,7 @@ const LLM_PROMPT: string[] = [
   "```",
   "",
   "Saving rewrites the file in a canonical form: cards renumbered, properties ordered Description, Date, Tags, and indented to the card's content column. Keep edits in that shape and the diff stays small.",
+  "The file should always be valid markdown after any changes.",
 ];
 
 /** The full starter file: title, one empty column, and the About section. */

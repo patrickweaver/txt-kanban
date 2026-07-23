@@ -1,11 +1,30 @@
-# Kanban
+# Cranban
 
 ## Backlog
 
-1. Update favicon
-   - Date: 2026-07-21T04:59:04.797Z
+1. Card View
+   - Description: Add a "View More" link to the bottom right corner of cards in the column view. When "View More" is opened, open a modal with the card in the center of the screen and headers for each section.
+     Add a dropdown on the card view for the list, with the current list showing and the option to switch to other lists. When the Card view list dropdown is used, the card moves to the bottom of the new list.
+     The card view has an 'x' in the top right to close the card, but clicking outside of the card modal also closes the card.
+   - Date: 2026-07-23T04:21:48.366Z
+2. Truncate long cards
+   - Description: After implementing a way to view full cards with Card View, truncate card descriptions after the 3rd line of text. Add an ellipsis to indicate the description is truncated.
+   - Date: 2026-07-23T04:24:41.003Z
 
 ## To Do
+
+1. Demo Board
+   - Description: On the start page there should be a button "Try a Demo Board" which opens a board with "To Do", "In Progress", and "Done" columns. The following cards should be pre-populated.
+     To Do:
+     - Create a local Cranban board
+     - Make a fun project using Cranban
+       In Progress:
+     - Try out the Cranban demo
+       Done:
+       (empty)
+       There should be a banner at the top of this page that says: "This is a demo board and changes are not saved, download the board and open the `.md` file to save changes.
+       The "Switch Boards" button should read "Back" only on this view, and there should be another button on this view, "Download File", which downloads the current board as a file called `cranban.md`.
+   - Date: 2026-07-23T04:28:37.363Z
 
 ## In progress
 
@@ -179,6 +198,11 @@
     - Description: Creating a "Settings" column seems to work on the frontend, but on refresh is cleared.
       The name is written as `## Settings` and read back as the reserved section, so the column and any cards in it were swallowed on the next load. The same applied to "About Cranban", and to "Archived"/"Deleted", which silently became a second archive hidden from the board. A reservedColumnReason helper now names the conflict; addColumn refuses those names outright, and the new-column dialog shows the reason and disables Save (Enter is blocked too) while one is typed.
     - Date: 2026-07-22T04:46:30.643Z
+48. Update favicon
+    - Date: 2026-07-21T04:59:04.797Z
+49. Add image to start view and board view
+    - Description: The favicon is now set to the left of both headings: "Cranban" on the start screen and the board name in the board header. One TitleIcon component renders it in both places, pointing at public/icon.png through import.meta.env.BASE_URL, since a bare "/icon.png" in JSX is not rewritten for the `./` base and would 404 in the subdirectory build. It is sized in em so it tracks whichever heading it sits in (56px start, 32px header, smaller on mobile) and carries an empty alt, since the heading beside it already names the app. Left inline rather than wrapped in a flex row so the header's baseline alignment still hangs off the title's text baseline; the board title got flex-shrink: 0 because a narrow header would otherwise squeeze it to min-content and break the line between the icon and the first word.
+    - Date: 2026-07-23T04:21:34.932Z
 
 ## About Cranban
 
