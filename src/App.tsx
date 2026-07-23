@@ -505,11 +505,17 @@ function App() {
     // Neither needs the File System Access API, so both show in either branch.
     const demoButton = (
       <button className="download-button" onClick={openDemo}>
+        <span role="img" aria-label="">
+          🎨
+        </span>{" "}
         Try a Demo Board
       </button>
     );
     const starterDownload = (
       <button className="download-button" onClick={downloadStarter}>
+        <span role="img" aria-label="">
+          💾
+        </span>{" "}
         Download a starter board
       </button>
     );
@@ -537,6 +543,9 @@ function App() {
             )}
             <div className="start-actions">
               <button className="open-button" onClick={openFile}>
+                <span role="img" aria-label="">
+                  📂
+                </span>{" "}
                 Open kanban file
               </button>
               {demoButton}
