@@ -85,13 +85,9 @@
   --card-bg: #fffafb;
   --border: #a63c56;
   --code-bg: #f7ccd6;
-  /* Darkened from #850429 when --bg was deepened to #ffdef2: accent text on the
-     accent tint over the page (the primary button, the active tab, an active
-     filter chip) is the tightest surface in this theme, and it had slipped to
-     6.91:1. This is the lightest value that puts it back over 7:1 with margin. */
-  --accent: #800427;
-  --accent-bg: rgba(128, 4, 39, 0.1);
-  --accent-border: rgba(128, 4, 39, 0.5);
+  --accent: #850429;
+  --accent-bg: rgba(133, 4, 41, 0.1);
+  --accent-border: rgba(133, 4, 41, 0.5);
   /* Brighter and redder than the cranberry accent, and still 7:1 with white. */
   --cta-bg: #a81010;
   --cta-text: #fff;
