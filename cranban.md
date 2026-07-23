@@ -13,10 +13,6 @@
 
 ## To Do
 
-1. Browser support
-   - Description: Add a warning to the start page for non Chromium browsers.
-   - Date: 2026-07-23T05:01:44.702Z
-
 ## In progress
 
 ## Done
@@ -211,6 +207,11 @@
     - Description: The Download File button on the demo board should be more of a CTA. Make the background of the button a brighter red and the text color light.
       Added a `--cta-bg`/`--cta-text` pair to every theme rather than hard-coding one red, so the button follows the same theming discipline as everything else and each theme can hit its own contrast bar: Cranberry #a81010 (7.65:1 with white, the AAA bar that theme holds itself to), Boring #b91c1c (6.47:1) and Dark Boring #c0272d (5.88:1), all measured in the rendered DOM rather than by eye. The button reuses .switch-boards for its shape and adds a .cta class that fills it and drops the border; hover brightens the fill instead of tinting the border, since there is no longer a border to tint.
     - Date: 2026-07-23T04:53:48.244Z
+52. Browser support
+    - Description: Add a warning to the start page for non Chromium browsers. It should briefly explain the technical limitation.
+      A tinted notice above the file input names the limitation in one line and then says what this browser can still do: open a file to read, or run the demo board, which is fully editable because it never writes to a file. It renders in the branch the start screen already picks by feature detection (`"showOpenFilePicker" in window`), not a user-agent sniff, so the warning can never disagree with the buttons next to it. Verified by re-running the app with the picker removed: text sits at 13:1 or better on the tint in all three themes, and the notice is absent where the picker exists.
+      The copy names `showOpenFilePicker` specifically rather than "the File System Access API", because the broader name is wrong in both directions: Firefox and Safari do implement the rest of the File System API — `FileSystemFileHandle`, and `createWritable` since Firefox 111 and Safari 26 — but only over the origin-private file system, which is sandboxed storage rather than the user's file. The pickers (`showOpenFilePicker`, `showSaveFilePicker`, `showDirectoryPicker`) are the genuinely Chromium-only piece: per MDN's compat data, Chrome/Edge 86+ and `false` in Firefox, Safari, Safari iOS and Firefox Android. Saying "the File System Access API" sent a curious reader to an MDN page full of green checkmarks.
+    - Date: 2026-07-23T05:01:44.702Z
 
 ## About Cranban
 

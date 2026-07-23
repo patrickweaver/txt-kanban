@@ -219,10 +219,16 @@ unrecognized stored value falls back to the default rather than sticking.
 
 ### Browser support
 
-Reading, editing, and saving need the File System Access API, available in
-Chrome and Edge. Other browsers (Firefox, Safari) fall back to a file input
+Editing and saving need `showOpenFilePicker` and the writable handle it
+returns — the File System Access API's picker extensions, available in Chrome
+and Edge. (Firefox and Safari do implement the rest of the File System API,
+`createWritable` included, but only over the origin-private file system:
+sandboxed storage, not the file in your repo.) Other browsers (Firefox, Safari) fall back to a file input
 that loads a board **read-only** — you can view it but not save changes. The
-demo board is fully editable everywhere, since it never writes to a file.
+start screen says so up front there, rather than letting you find out after
+opening a file, and the check is feature detection rather than a browser
+sniff. The demo board is fully editable everywhere, since it never writes to a
+file.
 
 ## Project structure
 

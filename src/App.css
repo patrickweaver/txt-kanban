@@ -83,6 +83,21 @@
   max-width: 420px;
 }
 
+/* Shown on the start screen where the File System Access API is missing, so a
+   Firefox or Safari user learns what this browser can do before opening a
+   file rather than after. Matches .intro's width so the two read as one column. */
+.browser-warning {
+  max-width: 560px;
+  box-sizing: border-box;
+  font-size: 15px;
+  text-align: left;
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
 .pending-note {
   font-size: 14px;
   color: var(--text);

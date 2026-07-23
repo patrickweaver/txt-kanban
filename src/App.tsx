@@ -568,6 +568,25 @@ function App() {
           </>
         ) : (
           <>
+            {/* Feature detection, not a browser sniff: the branch you are in is
+                decided by whether the picker exists, so the warning can never
+                disagree with what the page actually offers. The picker is also
+                the honest thing to name — Firefox and Safari do implement the
+                rest of the File System API, including createWritable, but only
+                over the origin-private file system, which is sandboxed storage
+                rather than the user's file. */}
+            <p className="browser-warning">
+              <strong>Unsupported Browser:</strong> Saving your board locally
+              uses the File System Access API&rsquo;s file picker,{" "}
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker"
+                target="_blank"
+              >
+                <code>showOpenFilePicker</code>
+              </a>
+              , which currently only Chromium browsers support. Your browser can
+              open a file to read, or try the demo board.
+            </p>
             <label htmlFor="file-input">Select kanban file</label>
             <input
               id="file-input"
