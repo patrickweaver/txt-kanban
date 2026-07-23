@@ -5,12 +5,29 @@ import { parseBoard } from "./parser";
 import { serializeBoard } from "./serializer";
 import { createFileWriter } from "./fileWriter";
 import type { FileWriter } from "./fileWriter";
-import { THEME_SETTING, readSetting, restoreCard, writeSetting } from "./boardOps";
-import { forgetFile, getRecentFile, listRecentFiles, rememberFile } from "./recentFiles";
+import {
+  THEME_SETTING,
+  readSetting,
+  restoreCard,
+  writeSetting,
+} from "./boardOps";
+import {
+  forgetFile,
+  getRecentFile,
+  listRecentFiles,
+  rememberFile,
+} from "./recentFiles";
 import type { RecentFile } from "./recentFiles";
-import { boardHash, parseBoardHash } from "./boardUrl";
+import { DEMO_HASH, boardHash, parseBoardHash } from "./boardUrl";
 import type { BoardRef } from "./boardUrl";
-import { HUMAN_INTRO, STARTER_FILE_NAME, starterBoardText } from "./starterBoard";
+import {
+  DEMO_BANNER,
+  HUMAN_INTRO,
+  STARTER_FILE_NAME,
+  demoBoardText,
+  starterBoardText,
+} from "./starterBoard";
+import { readStoredDemo, writeStoredDemo } from "./demoStore";
 import { useBoard } from "./useBoard";
 import {
   DEFAULT_THEME,
@@ -56,7 +73,13 @@ const supportsFilePicker = "showOpenFilePicker" in window;
 // public/, so it needs BASE_URL to survive a build served from a subdirectory.
 // Decorative: the heading beside it already carries the name, so alt is empty.
 function TitleIcon() {
-  return <img className="title-icon" src={`${import.meta.env.BASE_URL}icon.png`} alt="" />;
+  return (
+    <img
+      className="title-icon"
+      src={`${import.meta.env.BASE_URL}icon.png`}
+      alt=""
+    />
+  );
 }
 
 interface ThemePickerProps {
@@ -68,7 +91,10 @@ function ThemePicker({ theme, onChange }: ThemePickerProps) {
   return (
     <label className="theme-picker">
       <span>Theme</span>
-      <select value={theme} onChange={(e) => onChange(e.target.value as ThemeId)}>
+      <select
+        value={theme}
+        onChange={(e) => onChange(e.target.value as ThemeId)}
+      >
         {THEMES.map(({ id, label }) => (
           <option key={id} value={id}>
             {label}
@@ -86,22 +112,30 @@ function App() {
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [openError, setOpenError] = useState<string | null>(null);
   const [writer, setWriter] = useState<FileWriter | null>(null);
-  const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
+  const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(
+    null,
+  );
   const [recents, setRecents] = useState<RecentFile[]>([]);
   const [view, setView] = useState<"board" | "archive">("board");
   // A board named by the URL that needs a click before the browser will grant
   // file permission (permission does not survive a page load on its own).
   const [pendingBoard, setPendingBoard] = useState<RecentFile | null>(null);
+  // The demo board: a real, editable board with no file behind it.
+  const [demo, setDemo] = useState(false);
   // Mirrors the file's `Theme` setting once a board is open; before that (and
   // for files that set no theme) it is the browser-local default.
-  const [theme, setTheme] = useState<ThemeId>(() => readStoredTheme() ?? DEFAULT_THEME);
+  const [theme, setTheme] = useState<ThemeId>(
+    () => readStoredTheme() ?? DEFAULT_THEME,
+  );
   // The file text this app last loaded or wrote; polling compares against it
   // so our own saves are not mistaken for external edits.
   const lastTextRef = useRef<string | null>(null);
   // The hash this app set itself, so its own hashchange events are ignored.
   const ownHashRef = useRef<string>("");
 
-  const readOnly = board !== null && writer === null;
+  // No writer means nothing can be written to disk — except on the demo board,
+  // which is fully editable and saves to localStorage instead.
+  const readOnly = board !== null && writer === null && !demo;
 
   useEffect(() => {
     if (supportsFilePicker) void listRecentFiles().then(setRecents);
@@ -110,16 +144,25 @@ function App() {
   // Open whatever board the URL names, and keep following the URL as the user
   // navigates back and forward.
   useEffect(() => {
-    if (!supportsFilePicker) return;
-    const initial = parseBoardHash(location.hash);
-    if (initial) {
-      ownHashRef.current = location.hash;
-      void openFromUrl(initial);
+    if (location.hash === DEMO_HASH) {
+      ownHashRef.current = DEMO_HASH;
+      openDemo();
+    } else if (supportsFilePicker) {
+      const initial = parseBoardHash(location.hash);
+      if (initial) {
+        ownHashRef.current = location.hash;
+        void openFromUrl(initial);
+      }
     }
     function onHashChange(): void {
       if (location.hash === ownHashRef.current) return;
       ownHashRef.current = location.hash;
-      const ref = parseBoardHash(location.hash);
+      if (location.hash === DEMO_HASH) {
+        openDemo();
+        return;
+      }
+      // A file board can only be resolved where handles are stored at all.
+      const ref = supportsFilePicker ? parseBoardHash(location.hash) : null;
       if (ref) void openFromUrl(ref);
       else closeBoard();
     }
@@ -166,7 +209,9 @@ function App() {
             const parsed = parseBoard(text);
             load(parsed);
             // An externally edited Theme setting applies immediately.
-            const fromFile = resolveThemeId(readSetting(parsed, THEME_SETTING) ?? "");
+            const fromFile = resolveThemeId(
+              readSetting(parsed, THEME_SETTING) ?? "",
+            );
             if (fromFile) setTheme(fromFile);
           }
         }
@@ -212,7 +257,8 @@ function App() {
       // Point the URL at this board once it has a stable recents id.
       if (id !== null) {
         ownHashRef.current = boardHash(id, handle.name);
-        if (location.hash !== ownHashRef.current) location.hash = ownHashRef.current;
+        if (location.hash !== ownHashRef.current)
+          location.hash = ownHashRef.current;
       }
       return listRecentFiles().then(setRecents);
     });
@@ -240,7 +286,9 @@ function App() {
     try {
       const handle = recent.handle;
       if ((await handle.queryPermission({ mode: "readwrite" })) !== "granted") {
-        if ((await handle.requestPermission({ mode: "readwrite" })) !== "granted") {
+        if (
+          (await handle.requestPermission({ mode: "readwrite" })) !== "granted"
+        ) {
           setOpenError(`Permission to open ${recent.name} was denied`);
           return;
         }
@@ -261,7 +309,9 @@ function App() {
     }
     if (!ref.name) return null;
     // Ids are per-browser, so fall back to the name for links opened elsewhere.
-    return (await listRecentFiles()).find((entry) => entry.name === ref.name) ?? null;
+    return (
+      (await listRecentFiles()).find((entry) => entry.name === ref.name) ?? null
+    );
   }
 
   /**
@@ -278,13 +328,15 @@ function App() {
       // are already on disk and recents reopen in a click.
       closeBoard();
       setOpenError(
-        `No board in this browser matches ${ref.name ?? "that link"}. Open the file once to link it.`
+        `No board in this browser matches ${ref.name ?? "that link"}. Open the file once to link it.`,
       );
       return;
     }
     let granted: boolean;
     try {
-      granted = (await recent.handle.queryPermission({ mode: "readwrite" })) === "granted";
+      granted =
+        (await recent.handle.queryPermission({ mode: "readwrite" })) ===
+        "granted";
     } catch {
       granted = false;
     }
@@ -300,7 +352,10 @@ function App() {
   async function openPendingBoard(): Promise<void> {
     if (!pendingBoard) return;
     try {
-      if ((await pendingBoard.handle.requestPermission({ mode: "readwrite" })) !== "granted") {
+      if (
+        (await pendingBoard.handle.requestPermission({ mode: "readwrite" })) !==
+        "granted"
+      ) {
         setOpenError(`Permission to open ${pendingBoard.name} was denied`);
         return;
       }
@@ -308,6 +363,35 @@ function App() {
     } catch (error) {
       setOpenError(`Could not open ${pendingBoard.name}: ${String(error)}`);
     }
+  }
+
+  /**
+   * Opens the demo board: a normal board with no file behind it. Its text is
+   * kept in localStorage, so edits survive a refresh, and the URL carries the
+   * reserved demo hash so a reload lands back here rather than on the start
+   * screen. Previous edits are reopened as they were left.
+   */
+  function openDemo(): void {
+    const text = readStoredDemo() ?? demoBoardText();
+    const parsed = parseBoard(text);
+    setWriter(null);
+    setFileHandle(null);
+    setFileName(null);
+    setSaveStatus("idle");
+    setSavedAt(null);
+    setOpenError(null);
+    setPendingBoard(null);
+    setView("board");
+    setDemo(true);
+    lastTextRef.current = text;
+    // Store it now, so a refresh before the first edit still reopens this demo.
+    writeStoredDemo(text);
+    load(parsed);
+    const fromFile = resolveThemeId(readSetting(parsed, THEME_SETTING) ?? "");
+    if (fromFile) setTheme(fromFile);
+    ownHashRef.current = DEMO_HASH;
+    // Assignment pushes a history entry, so Back leaves the demo.
+    if (location.hash !== DEMO_HASH) location.hash = DEMO_HASH;
   }
 
   function closeBoard(): void {
@@ -318,16 +402,16 @@ function App() {
     setSavedAt(null);
     setOpenError(null);
     setPendingBoard(null);
+    setDemo(false);
     setView("board");
     lastTextRef.current = null;
     load(null);
     void listRecentFiles().then(setRecents);
   }
 
-  /** Offers the starter board as a file, so a new user has something to open. */
-  function downloadStarter(): void {
+  function downloadText(text: string): void {
     const url = URL.createObjectURL(
-      new Blob([starterBoardText()], { type: "text/markdown" })
+      new Blob([text], { type: "text/markdown" }),
     );
     const link = document.createElement("a");
     link.href = url;
@@ -335,6 +419,20 @@ function App() {
     link.click();
     // Revoking in the same tick can cancel the download in some browsers.
     setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  /** Offers the starter board as a file, so a new user has something to open. */
+  function downloadStarter(): void {
+    downloadText(starterBoardText());
+  }
+
+  /**
+   * Offers the board on screen as a file. This is how work done in the demo
+   * leaves the browser: open the downloaded file and it becomes a real board.
+   */
+  function downloadBoard(): void {
+    const current = boardRef.current;
+    if (current) downloadText(serializeBoard(current));
   }
 
   /** Back to the picker at the root URL; the file stays in recents. */
@@ -345,7 +443,9 @@ function App() {
     closeBoard();
   }
 
-  async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+  async function handleFileSelect(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<void> {
     const file = event.target.files?.[0];
     if (!file) return;
     const text = await file.text();
@@ -369,11 +469,18 @@ function App() {
    */
   function changeTheme(next: ThemeId): void {
     setTheme(next);
-    if (boardRef.current) save(apply((b) => writeSetting(b, THEME_SETTING, next)));
+    if (boardRef.current)
+      save(apply((b) => writeSetting(b, THEME_SETTING, next)));
     else writeStoredTheme(next);
   }
 
   function save(next: Board): void {
+    // The demo has no file: its text goes to this browser's storage instead, so
+    // edits survive a refresh without ever being written to disk.
+    if (demo) {
+      writeStoredDemo(serializeBoard(next));
+      return;
+    }
     if (!writer) return;
     const text = serializeBoard(next);
     lastTextRef.current = text;
@@ -394,6 +501,12 @@ function App() {
           <p key={paragraph.slice(0, 24)}>{withInlineCode(paragraph)}</p>
         ))}
       </div>
+    );
+    // Neither needs the File System Access API, so both show in either branch.
+    const demoButton = (
+      <button className="download-button" onClick={openDemo}>
+        Try a Demo Board
+      </button>
     );
     const starterDownload = (
       <button className="download-button" onClick={downloadStarter}>
@@ -426,6 +539,7 @@ function App() {
               <button className="open-button" onClick={openFile}>
                 Open kanban file
               </button>
+              {demoButton}
               {starterDownload}
             </div>
             {recents.length > 0 && (
@@ -434,10 +548,17 @@ function App() {
                 <ul>
                   {recents.map((recent) => (
                     <li key={recent.id}>
-                      <button className="recent-file" onClick={() => openRecent(recent)}>
+                      <button
+                        className="recent-file"
+                        onClick={() => openRecent(recent)}
+                      >
                         <span className="recent-name">{recent.name}</span>
-                        {recent.title && <span className="recent-title">{recent.title}</span>}
-                        <span className="recent-time">{relativeTime(recent.lastOpened)}</span>
+                        {recent.title && (
+                          <span className="recent-title">{recent.title}</span>
+                        )}
+                        <span className="recent-time">
+                          {relativeTime(recent.lastOpened)}
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -454,7 +575,10 @@ function App() {
               accept=".txt,.md,text/plain,text/markdown"
               onChange={handleFileSelect}
             />
-            {starterDownload}
+            <div className="start-actions">
+              {demoButton}
+              {starterDownload}
+            </div>
           </>
         )}
         <ThemePicker theme={theme} onChange={changeTheme} />
@@ -486,15 +610,30 @@ function App() {
         </nav>
         <button
           className="switch-boards"
-          title="Close this board and pick another"
+          title={
+            demo
+              ? "Leave the demo and pick a file"
+              : "Close this board and pick another"
+          }
           onClick={switchBoards}
         >
-          Switch Boards
+          {demo ? "Back" : "Switch Boards"}
         </button>
+        {demo && (
+          <button
+            className="switch-boards cta"
+            title={`Save this board as ${STARTER_FILE_NAME}, then open it to keep working in it`}
+            onClick={downloadBoard}
+          >
+            Download File
+          </button>
+        )}
         <ThemePicker theme={theme} onChange={changeTheme} />
-        {readOnly ? (
+        {/* The banner says what happens to demo edits, so the file-save status
+            would only contradict it. */}
+        {demo ? null : readOnly ? (
           <span className="save-status">
-            Read-only — editing and saving require Chrome or Edge
+            Read-only — editing and saving require a Chromium Browser
           </span>
         ) : (
           <span
@@ -504,7 +643,9 @@ function App() {
             {saveStatus === "idle" && "Auto-saves to file"}
             {saveStatus === "saving" && "Saving…"}
             {saveStatus === "saved" &&
-              (savedAt ? `Saved to file at ${savedClockTime(savedAt)}` : "Saved to file")}
+              (savedAt
+                ? `Saved to file at ${savedClockTime(savedAt)}`
+                : "Saved to file")}
             {saveStatus === "error" && (
               <>
                 Error saving <button onClick={retrySave}>Retry</button>
@@ -513,6 +654,7 @@ function App() {
           </span>
         )}
       </header>
+      {demo && <p className="demo-banner">{withInlineCode(DEMO_BANNER)}</p>}
       {view === "archive" ? (
         <ArchiveView
           board={board}

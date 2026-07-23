@@ -1,8 +1,9 @@
 import { ABOUT_SECTION } from "./boardOps";
 
-// The starter board, used three ways: seeded into an empty file, offered as a
-// download on the start screen, and the source of the explanation shown there.
-// Defining it once is what keeps the page and the file from drifting apart.
+// The canned board text: seeded into an empty file, offered as a download on
+// the start screen, filled in as the demo board, and the source of the
+// explanation shown on that screen. Defining it once is what keeps the page and
+// the file from drifting apart.
 
 export const STARTER_FILE_NAME = "cranban.md";
 export const STARTER_TITLE = "Cranban Board";
@@ -42,13 +43,9 @@ const LLM_PROMPT: string[] = [
   "The file should always be valid markdown after any changes.",
 ];
 
-/** The full starter file: title, one empty column, and the About section. */
-export function starterBoardText(): string {
+/** The `## About Cranban` section, shared by the starter and demo boards. */
+function aboutLines(): string[] {
   return [
-    `# ${STARTER_TITLE}`,
-    "",
-    "## To Do",
-    "",
     `## ${ABOUT_SECTION}`,
     "",
     "### Human Users",
@@ -57,6 +54,53 @@ export function starterBoardText(): string {
     "### LLM Users",
     "",
     ...LLM_PROMPT,
+  ];
+}
+
+/** The full starter file: title, one empty column, and the About section. */
+export function starterBoardText(): string {
+  return [`# ${STARTER_TITLE}`, "", "## To Do", "", ...aboutLines(), ""].join(
+    "\n",
+  );
+}
+
+/** Shown above the demo board. Backticks render as inline code. */
+export const DEMO_BANNER =
+  "This is a demo board and changes are not saved to a file. Download the board and open the `.md` file to save changes.";
+
+/**
+ * The demo board: the same file any user would keep, already filled in. It
+ * carries the About section too, so downloading it yields a real starter file
+ * rather than a stripped sample. Dates are stamped when the demo is created,
+ * since a hard-coded one would read as stale the day after it was written.
+ */
+export function demoBoardText(): string {
+  const now = new Date().toISOString();
+  return [
+    `# ${STARTER_TITLE}`,
+    "",
+    "## To Do",
+    "",
+    "1. Create a local Cranban board",
+    "   - Description: Download this board, drop the file into a project, and open it with",
+    "     the button on the start screen. From then on the board lives in your repo,",
+    "     next to the code it describes.",
+    `   - Date: ${now}`,
+    "   - Tags: getting-started",
+    "2. Make a fun project using Cranban",
+    "   - Tags: ideas",
+    "",
+    "## In Progress",
+    "",
+    "1. Try out the Cranban demo",
+    "   - Description: Drag this card to Done, rename it, give it a tag. Everything works",
+    "     here — it just never reaches a file.",
+    `   - Date: ${now}`,
+    "   - Tags: getting-started, demo",
+    "",
+    "## Done",
+    "",
+    ...aboutLines(),
     "",
   ].join("\n");
 }

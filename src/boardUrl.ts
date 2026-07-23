@@ -14,12 +14,23 @@ export interface BoardRef {
   name: string | null;
 }
 
+/**
+ * The demo board is not a file, so it gets a reserved hash of its own rather
+ * than a handle reference. Reserving it here keeps it from being read as a
+ * board named "demo".
+ */
+export const DEMO_HASH = "#demo";
+
 export function boardHash(id: number, name: string): string {
   return `#${id}-${encodeURIComponent(name)}`;
 }
 
-/** null when the hash references no board (empty, or an unrecognized shape). */
+/**
+ * null when the hash references no file board (empty, the demo, or an
+ * unrecognized shape).
+ */
 export function parseBoardHash(hash: string): BoardRef | null {
+  if (hash === DEMO_HASH) return null;
   const raw = hash.replace(/^#/, "");
   if (raw === "") return null;
   const match = /^(\d+)-(.*)$/.exec(raw);

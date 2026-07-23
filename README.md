@@ -163,6 +163,15 @@ file first. Opening a file that is empty (or only whitespace) seeds it with
 that same starter board instead of dropping you on a blank screen — a file
 that merely fails to parse is never overwritten.
 
+**Try a Demo Board** opens a filled-in board with no file behind it: three
+columns, a few cards with dates, tags and descriptions, and everything
+editable. Its text is kept in this browser's local storage rather than on
+disk, so edits survive a refresh (the URL carries a reserved `#demo` hash) but
+never reach a file — **Download File** in the header saves the board as it
+stands, and opening that file turns the demo into a real board. Because none
+of it touches the File System Access API, the demo is also the way to try
+Cranban in Firefox or Safari.
+
 The starter board is a title, an empty `## To Do`, and an `## About Cranban`
 section with two subsections: **Human Users**, the same copy the start screen
 shows, and **LLM Users**, a short prompt describing the syntax for coding
@@ -212,7 +221,8 @@ unrecognized stored value falls back to the default rather than sticking.
 
 Reading, editing, and saving need the File System Access API, available in
 Chrome and Edge. Other browsers (Firefox, Safari) fall back to a file input
-that loads a board **read-only** — you can view it but not save changes.
+that loads a board **read-only** — you can view it but not save changes. The
+demo board is fully editable everywhere, since it never writes to a file.
 
 ## Project structure
 
@@ -225,8 +235,9 @@ src/
   boardOps.ts        Pure Board -> Board operations (move, edit, tag, archive, restore, …)
   fileWriter.ts      Serialized, latest-wins writes to a file handle + save status
   recentFiles.ts     IndexedDB-backed recent files
-  boardUrl.ts        The `#<id>-<name>` board hash, and why it can't be a path
-  starterBoard.ts    The starter board: seed, download, and start-screen copy
+  boardUrl.ts        The `#<id>-<name>` board hash, the `#demo` hash, and why it can't be a path
+  starterBoard.ts    Canned board text: seed, download, demo, and start-screen copy
+  demoStore.ts       The demo board's text, kept in localStorage instead of a file
   themes.ts          The selectable themes and lenient theme-value parsing
   types.ts           Board / Column / Card / Setting / SaveStatus types
   file-system-access.d.ts  Type declarations for the File System Access API

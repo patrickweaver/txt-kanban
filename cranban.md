@@ -13,18 +13,9 @@
 
 ## To Do
 
-1. Demo Board
-   - Description: On the start page there should be a button "Try a Demo Board" which opens a board with "To Do", "In Progress", and "Done" columns. The following cards should be pre-populated.
-     To Do:
-     - Create a local Cranban board
-     - Make a fun project using Cranban
-       In Progress:
-     - Try out the Cranban demo
-       Done:
-       (empty)
-       There should be a banner at the top of this page that says: "This is a demo board and changes are not saved, download the board and open the `.md` file to save changes.
-       The "Switch Boards" button should read "Back" only on this view, and there should be another button on this view, "Download File", which downloads the current board as a file called `cranban.md`.
-   - Date: 2026-07-23T04:28:37.363Z
+1. Browser support
+   - Description: Add a warning to the start page for non Chromium browsers.
+   - Date: 2026-07-23T05:01:44.702Z
 
 ## In progress
 
@@ -200,9 +191,26 @@
     - Date: 2026-07-22T04:46:30.643Z
 48. Update favicon
     - Date: 2026-07-21T04:59:04.797Z
-49. Add image to start view and board view
+49. Demo Board
+    - Description: On the start page there should be a button "Try a Demo Board" which opens a board with "To Do", "In Progress", and "Done" columns. The following cards should be pre-populated.
+      To Do:
+      - Create a local Cranban board
+      - Make a fun project using Cranban
+        In Progress:
+      - Try out the Cranban demo
+        Done:
+        (empty)
+        There should be a banner at the top of this page that says: "This is a demo board and changes are not saved, download the board and open the `.md` file to save changes.
+        The "Switch Boards" button should read "Back" only on this view, and there should be another button on this view, "Download File", which downloads the current board as a file called `cranban.md`.
+        The demo is a normal, fully editable board with no file behind it. Its text is kept in localStorage (demoStore.ts) and written on every save, so edits survive a refresh; the URL carries a reserved `#demo` hash so a reload reopens the demo rather than the start screen, and Back still leaves it. `readOnly` had to stop meaning "no writer", since that is also true of the demo — it is now "no writer and not the demo", leaving the Firefox/Safari fallback read-only as before while the demo stays editable in every browser. The cards carry dates, tags and descriptions so the filter bar and card metadata are visible rather than three bare titles, and the board includes the About Cranban section, so "Download File" yields a real starter file (named cranban.md) rather than a stripped sample. The banner says "not saved to a file — they stay in this browser", since localStorage persistence makes a flat "changes are not saved" untrue.
+    - Date: 2026-07-23T04:28:37.363Z
+50. Add image to start view and board view
     - Description: The favicon is now set to the left of both headings: "Cranban" on the start screen and the board name in the board header. One TitleIcon component renders it in both places, pointing at public/icon.png through import.meta.env.BASE_URL, since a bare "/icon.png" in JSX is not rewritten for the `./` base and would 404 in the subdirectory build. It is sized in em so it tracks whichever heading it sits in (56px start, 32px header, smaller on mobile) and carries an empty alt, since the heading beside it already names the app. Left inline rather than wrapped in a flex row so the header's baseline alignment still hangs off the title's text baseline; the board title got flex-shrink: 0 because a narrow header would otherwise squeeze it to min-content and break the line between the icon and the first word.
     - Date: 2026-07-23T04:21:34.932Z
+51. Design: Download File button CTA
+    - Description: The Download File button on the demo board should be more of a CTA. Make the background of the button a brighter red and the text color light.
+      Added a `--cta-bg`/`--cta-text` pair to every theme rather than hard-coding one red, so the button follows the same theming discipline as everything else and each theme can hit its own contrast bar: Cranberry #a81010 (7.65:1 with white, the AAA bar that theme holds itself to), Boring #b91c1c (6.47:1) and Dark Boring #c0272d (5.88:1), all measured in the rendered DOM rather than by eye. The button reuses .switch-boards for its shape and adds a .cta class that fills it and drops the border; hover brightens the fill instead of tinting the border, since there is no longer a border to tint.
+    - Date: 2026-07-23T04:53:48.244Z
 
 ## About Cranban
 
