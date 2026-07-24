@@ -12,21 +12,31 @@ export function findCard(board: Board, cardId: string): Card | null {
 }
 
 export function findColumnOfCard(board: Board, cardId: string): Column | null {
-  return board.columns.find((col) => col.cards.some((c) => c.id === cardId)) ?? null;
+  return (
+    board.columns.find((col) => col.cards.some((c) => c.id === cardId)) ?? null
+  );
 }
 
-function mapCard(board: Board, cardId: string, fn: (card: Card) => Card): Board {
+function mapCard(
+  board: Board,
+  cardId: string,
+  fn: (card: Card) => Card,
+): Board {
   return {
     ...board,
     columns: board.columns.map((col) =>
       col.cards.some((c) => c.id === cardId)
         ? { ...col, cards: col.cards.map((c) => (c.id === cardId ? fn(c) : c)) }
-        : col
+        : col,
     ),
   };
 }
 
-export function updateCardTitle(board: Board, cardId: string, title: string): Board {
+export function updateCardTitle(
+  board: Board,
+  cardId: string,
+  title: string,
+): Board {
   return mapCard(board, cardId, (card) => ({ ...card, title }));
 }
 
@@ -36,22 +46,37 @@ export function updateCardTitle(board: Board, cardId: string, title: string): Bo
  * description line, and the parser skips blanks, so neither would survive a
  * round-trip.
  */
-export function setDescription(board: Board, cardId: string, text: string): Board {
+export function setDescription(
+  board: Board,
+  cardId: string,
+  text: string,
+): Board {
   const normalized = text
     .split("\n")
     .map((line) => line.trimEnd())
     .filter((line) => line !== "")
     .join("\n");
-  return mapCard(board, cardId, (card) => ({ ...card, description: normalized }));
+  return mapCard(board, cardId, (card) => ({
+    ...card,
+    description: normalized,
+  }));
 }
 
 export function addTag(board: Board, cardId: string, tag: string): Board {
   const value = tag.trim();
   if (value === "") return board;
-  return mapCard(board, cardId, (card) => ({ ...card, tags: [...card.tags, value] }));
+  return mapCard(board, cardId, (card) => ({
+    ...card,
+    tags: [...card.tags, value],
+  }));
 }
 
-export function updateTag(board: Board, cardId: string, index: number, tag: string): Board {
+export function updateTag(
+  board: Board,
+  cardId: string,
+  index: number,
+  tag: string,
+): Board {
   const value = tag.trim();
   if (value === "") return board;
   return mapCard(board, cardId, (card) => {
@@ -117,7 +142,7 @@ export function addCard(board: Board, columnId: string, card: Card): Board {
   return {
     ...board,
     columns: board.columns.map((col) =>
-      col.id === columnId ? { ...col, cards: [...col.cards, card] } : col
+      col.id === columnId ? { ...col, cards: [...col.cards, card] } : col,
     ),
   };
 }
@@ -127,7 +152,7 @@ export function moveCardToColumn(
   board: Board,
   cardId: string,
   columnId: string,
-  index: number
+  index: number,
 ): Board {
   const card = findCard(board, cardId);
   if (!card) return board;
@@ -136,22 +161,35 @@ export function moveCardToColumn(
     columns: board.columns.map((col) => {
       const without = col.cards.filter((c) => c.id !== cardId);
       if (col.id !== columnId) {
-        return without.length === col.cards.length ? col : { ...col, cards: without };
+        return without.length === col.cards.length
+          ? col
+          : { ...col, cards: without };
       }
       const at = index < 0 ? without.length : Math.min(index, without.length);
-      return { ...col, cards: [...without.slice(0, at), card, ...without.slice(at)] };
+      return {
+        ...col,
+        cards: [...without.slice(0, at), card, ...without.slice(at)],
+      };
     }),
   };
 }
 
-export function reorderCard(board: Board, cardId: string, toIndex: number): Board {
+export function reorderCard(
+  board: Board,
+  cardId: string,
+  toIndex: number,
+): Board {
   const column = findColumnOfCard(board, cardId);
   if (!column) return board;
   return moveCardToColumn(board, cardId, column.id, toIndex);
 }
 
 /** Moves the column `columnId` to the position of `overColumnId`. */
-export function moveColumn(board: Board, columnId: string, overColumnId: string): Board {
+export function moveColumn(
+  board: Board,
+  columnId: string,
+  overColumnId: string,
+): Board {
   const from = board.columns.findIndex((c) => c.id === columnId);
   const to = board.columns.findIndex((c) => c.id === overColumnId);
   if (from < 0 || to < 0 || from === to) return board;
@@ -177,11 +215,17 @@ export const ABOUT_SECTION = "About Cranban";
 /** Value of a setting by title (case-insensitive); null when absent. */
 export function readSetting(board: Board, title: string): string | null {
   const key = title.toLowerCase();
-  return board.settings.find((s) => s.title.toLowerCase() === key)?.value ?? null;
+  return (
+    board.settings.find((s) => s.title.toLowerCase() === key)?.value ?? null
+  );
 }
 
 /** Updates a setting in place, or appends it; other settings are untouched. */
-export function writeSetting(board: Board, title: string, value: string): Board {
+export function writeSetting(
+  board: Board,
+  title: string,
+  value: string,
+): Board {
   const key = title.toLowerCase();
   const index = board.settings.findIndex((s) => s.title.toLowerCase() === key);
   const settings = [...board.settings];
@@ -196,12 +240,10 @@ const DELETED_AT_RE = /\s*\(deleted (\d{4}-\d{2}-\d{2} \d{2}:\d{2})\)\s*$/;
 
 /**
  * The archive column holds removed cards and is hidden from the board view.
- * New columns are created as "Archived"; "Deleted" is still recognized for
- * files written before the rename.
  */
 export function isArchiveName(name: string): boolean {
   const key = name.trim().toLowerCase();
-  return key === "archived" || key === "deleted";
+  return key === "archived";
 }
 
 export function isArchiveColumn(column: Column): boolean {
@@ -212,7 +254,7 @@ export function isArchiveColumn(column: Column): boolean {
 export function formatDateTime(date: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())} ${p(
-    date.getHours()
+    date.getHours(),
   )}:${p(date.getMinutes())}`;
 }
 
@@ -247,26 +289,36 @@ export function deletedAtOf(card: Card): number {
  * Moves a card to the "Archived" column (created at the end of the board if
  * missing), appending a deleted-at timestamp to its title.
  */
-export function archiveCard(board: Board, cardId: string, deletedAt: string): Board {
+export function archiveCard(
+  board: Board,
+  cardId: string,
+  deletedAt: string,
+): Board {
   const card = findCard(board, cardId);
   if (!card) return board;
-  const archived: Card = { ...card, title: `${card.title} (deleted ${deletedAt})` };
+  const archived: Card = {
+    ...card,
+    title: `${card.title} (deleted ${deletedAt})`,
+  };
   const columns = board.columns.map((col) =>
     col.cards.some((c) => c.id === cardId)
       ? { ...col, cards: col.cards.filter((c) => c.id !== cardId) }
-      : col
+      : col,
   );
   const archiveColumn = columns.find(isArchiveColumn);
   if (!archiveColumn) {
     return {
       ...board,
-      columns: [...columns, { id: crypto.randomUUID(), name: "Archived", cards: [archived] }],
+      columns: [
+        ...columns,
+        { id: crypto.randomUUID(), name: "Archived", cards: [archived] },
+      ],
     };
   }
   return {
     ...board,
     columns: columns.map((col) =>
-      col === archiveColumn ? { ...col, cards: [...col.cards, archived] } : col
+      col === archiveColumn ? { ...col, cards: [...col.cards, archived] } : col,
     ),
   };
 }
@@ -280,12 +332,17 @@ export function restoreCard(board: Board, cardId: string): Board {
   const from = findColumnOfCard(board, cardId);
   const target = board.columns.find((col) => !isArchiveColumn(col));
   if (!card || !from || !isArchiveColumn(from) || !target) return board;
-  const restored: Card = { ...card, title: card.title.replace(DELETED_AT_RE, "") };
+  const restored: Card = {
+    ...card,
+    title: card.title.replace(DELETED_AT_RE, ""),
+  };
   return {
     ...board,
     columns: board.columns.map((col) => {
-      if (col.id === from.id) return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
-      if (col.id === target.id) return { ...col, cards: [...col.cards, restored] };
+      if (col.id === from.id)
+        return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
+      if (col.id === target.id)
+        return { ...col, cards: [...col.cards, restored] };
       return col;
     }),
   };

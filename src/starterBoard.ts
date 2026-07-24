@@ -94,7 +94,7 @@ export function demoBoardText(): string {
     "",
     "1. Try out the Cranban demo",
     "   - Description: Drag this card to Done, rename it, give it a tag. Everything works",
-    "     here — it just never reaches a file.",
+    "     like the full version of Cranban, but is only saved in your browser, not in a local file.",
     `   - Date: ${now}`,
     "   - Tags: getting-started, demo",
     "",
