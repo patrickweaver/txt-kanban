@@ -277,7 +277,8 @@ export function parseCardDate(value: string): number | null {
   return Number.isNaN(ms) ? null : ms;
 }
 
-/** Epoch ms of the card's deleted-at title suffix; 0 when absent/unparseable. */
+/** Epoch ms of the card's deleted-at title suffix; 0 when absent or
+ *  unparseable. */
 export function deletedAtOf(card: Card): number {
   const match = DELETED_AT_RE.exec(card.title);
   if (!match) return 0;

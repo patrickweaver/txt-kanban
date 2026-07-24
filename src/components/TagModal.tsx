@@ -48,7 +48,11 @@ function TagModal({ value, onSave, onRemove, onClose }: TagModalProps) {
           <button className="modal-remove" onClick={onRemove}>
             Remove
           </button>
-          <button className="modal-save" onClick={save} disabled={trimmed === ""}>
+          <button
+            className="modal-save"
+            onClick={save}
+            disabled={trimmed === ""}
+          >
             Save
           </button>
         </div>

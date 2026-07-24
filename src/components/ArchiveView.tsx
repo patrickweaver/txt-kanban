@@ -23,7 +23,8 @@ function ArchiveView({ board, readOnly, onRestore }: ArchiveViewProps) {
         ) : (
           <div className="column-cards">
             {cards.map((card) => {
-              const cardDate = card.date !== null ? parseCardDate(card.date) : null;
+              const cardDate =
+                card.date !== null ? parseCardDate(card.date) : null;
               return (
               <div key={card.id} className="card archive-card">
                 <div className="card-header">

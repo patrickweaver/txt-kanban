@@ -49,7 +49,8 @@ function relativeTime(ms: number): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-// Clock time of a save, including seconds so quick successive saves visibly tick.
+// Clock time of a save, including seconds so quick successive saves visibly
+// tick.
 function savedClockTime(ms: number): string {
   return new Date(ms).toLocaleTimeString([], {
     hour: "numeric",
@@ -421,7 +422,8 @@ function App() {
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
-  /** Offers the starter board as a file, so a new user has something to open. */
+  /** Offers the starter board as a file, so a new user has something to
+   *  open. */
   function downloadStarter(): void {
     downloadText(starterBoardText());
   }
@@ -661,7 +663,7 @@ function App() {
             would only contradict it. */}
         {demo ? null : readOnly ? (
           <span className="save-status">
-            Read-only — editing and saving require a Chromium Browser
+            Read-only, editing and saving require a Chromium Browser
           </span>
         ) : (
           <span

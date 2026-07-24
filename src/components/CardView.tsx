@@ -10,7 +10,8 @@ interface CardViewProps {
   readOnly: boolean;
   /** Rendered inside the DragOverlay: no sortable wiring, no editing. */
   overlay?: boolean;
-  /** Disables drag (e.g. while a tag filter is active) without disabling editing. */
+  /** Disables drag (e.g. while a tag filter is active) without disabling
+   *  editing. */
   dragDisabled?: boolean;
   /** Just added via the composer: open its description editor once. */
   autoEdit?: boolean;
@@ -27,7 +28,8 @@ interface InlineEditProps {
   value: string;
   onCommit: (value: string) => void;
   onClose: () => void;
-  /** Textarea with soft wrapping; Enter commits, Shift+Enter inserts a newline. */
+  /** Textarea with soft wrapping; Enter commits, Shift+Enter inserts a
+   *  newline. */
   multiline?: boolean;
 }
 
@@ -36,7 +38,12 @@ function autosize(el: HTMLTextAreaElement): void {
   el.style.height = `${el.scrollHeight}px`;
 }
 
-function InlineEdit({ value, onCommit, onClose, multiline = false }: InlineEditProps) {
+function InlineEdit({
+  value,
+  onCommit,
+  onClose,
+  multiline = false,
+}: InlineEditProps) {
   const [text, setText] = useState(value);
   const cancelled = useRef(false);
 
@@ -45,7 +52,9 @@ function InlineEdit({ value, onCommit, onClose, multiline = false }: InlineEditP
     onClose();
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>): void {
+  function handleKeyDown(
+    e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ): void {
     // Commit directly rather than via blur(); unmounting on close means
     // no blur event follows, so this cannot double-commit.
     if (e.key === "Enter" && !(multiline && e.shiftKey)) {
@@ -162,8 +171,14 @@ function CardView({
 
   const cardDate = card.date !== null ? parseCardDate(card.date) : null;
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
       id: card.id,
       disabled: readOnly || overlay || dragDisabled || editing !== null,
     });
@@ -249,7 +264,10 @@ function CardView({
           {!readOnly && !overlay && (
             <li>
               {editing === "new-tag" ? (
-                <TagComposer onAdd={(tag) => onTagAdd?.(tag)} onClose={() => setEditing(null)} />
+                <TagComposer
+                  onAdd={(tag) => onTagAdd?.(tag)}
+                  onClose={() => setEditing(null)}
+                />
               ) : (
                 <button
                   type="button"

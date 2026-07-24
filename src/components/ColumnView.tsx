@@ -89,8 +89,14 @@ function ColumnView({
   const canDrag = !readOnly && !dragDisabled;
   // The whole column is sortable (dragged by its header). Its droppable
   // doubles as the drop target that lets cards land in an empty column.
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
       id: column.id,
       data: { type: "column" },
       disabled: !canDrag,
@@ -156,7 +162,9 @@ function ColumnView({
               dragDisabled={dragDisabled}
               autoEdit={autoEditCardId === card.id}
               onTitleChange={(title) => onCardTitleChange(card.id, title)}
-              onDescriptionChange={(text) => onCardDescriptionChange(card.id, text)}
+              onDescriptionChange={(text) =>
+                onCardDescriptionChange(card.id, text)
+              }
               onArchive={() => onCardArchive(card.id)}
               onTagAdd={(tag) => onCardTagAdd(card.id, tag)}
               onTagUpdate={(i, tag) => onCardTagUpdate(card.id, i, tag)}

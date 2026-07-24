@@ -3,7 +3,8 @@ import { ABOUT_SECTION, SETTINGS_SECTION, isArchiveColumn } from "./boardOps";
 
 // Canonical output format: `# Title` (omitted when null), one `## Name` block
 // per column (plus the reserved `## About Cranban` and `## Settings` sections,
-// written after the active columns), cards renumbered 1., 2., ... Each card's properties follow as
+// written after the active columns), cards renumbered 1., 2., ... Each card's
+// properties follow as
 // `- Title: value` items indented to the card's content column (3 spaces
 // under `1. `, 4 under `10. ` — the same alignment markdown formatters use),
 // in a fixed order: a single `Description:` item, a `Date:` line, a single

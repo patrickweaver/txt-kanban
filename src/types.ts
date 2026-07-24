@@ -1,11 +1,13 @@
 export interface UnknownProperty {
-  /** Title as written in the file (original casing), for display and round-trip. */
+  /** Title as written in the file (original casing), for display and
+   *  round-trip. */
   title: string;
   value: string;
 }
 
 export interface Card {
-  /** Runtime-only identity for React keys and drag-and-drop; never serialized. */
+  /** Runtime-only identity for React keys and drag-and-drop; never
+   *  serialized. */
   id: string;
   title: string;
   /** The card's description, possibly multi-line; empty string = none. Extra

@@ -290,3 +290,6 @@ Saving rewrites the file in a canonical form: cards renumbered, properties order
    - Description: yes it works now
      Yes ok!
    - Date: 2026-07-21T03:25:10.213Z
+10. Test card 5 (deleted 2026-07-23 23:08)
+    - Description: Test car
+    - Date: 2026-07-24T06:07:57.263Z

@@ -68,7 +68,8 @@ export async function getRecentFile(id: number): Promise<RecentFile | null> {
     const db = await openDb();
     try {
       const store = db.transaction(STORE, "readonly").objectStore(STORE);
-      return (await asPromise(store.get(id) as IDBRequest<RecentFile | undefined>)) ?? null;
+      const request = store.get(id) as IDBRequest<RecentFile | undefined>;
+      return (await asPromise(request)) ?? null;
     } finally {
       db.close();
     }
@@ -88,7 +89,9 @@ export async function rememberFile(
       // Read existing entries first: isSameEntry is async and would close an
       // open transaction, so dedupe before starting the write transaction.
       const readStore = db.transaction(STORE, "readonly").objectStore(STORE);
-      const all = await asPromise(readStore.getAll() as IDBRequest<RecentFile[]>);
+      const all = await asPromise(
+        readStore.getAll() as IDBRequest<RecentFile[]>,
+      );
       let existingId: number | undefined;
       for (const entry of all) {
         try {
@@ -103,7 +106,12 @@ export async function rememberFile(
 
       const tx = db.transaction(STORE, "readwrite");
       const store = tx.objectStore(STORE);
-      const record = { name: handle.name, title, lastOpened: Date.now(), handle };
+      const record = {
+        name: handle.name,
+        title,
+        lastOpened: Date.now(),
+        handle,
+      };
       let id = existingId ?? null;
       if (existingId !== undefined) {
         store.put({ ...record, id: existingId });
@@ -114,8 +122,11 @@ export async function rememberFile(
         request.onsuccess = () => {
           id = Number(request.result);
         };
-        const oldestFirst = [...all].sort((a, b) => a.lastOpened - b.lastOpened);
-        for (const entry of oldestFirst.slice(0, Math.max(0, all.length + 1 - MAX_RECENTS))) {
+        const oldestFirst = [...all].sort(
+          (a, b) => a.lastOpened - b.lastOpened,
+        );
+        const excess = Math.max(0, all.length + 1 - MAX_RECENTS);
+        for (const entry of oldestFirst.slice(0, excess)) {
           store.delete(entry.id);
         }
       }

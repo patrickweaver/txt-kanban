@@ -18,5 +18,21 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // 80 columns. String and template literals are exempt because several
+      // hold prose written verbatim into the board file (see starterBoard.ts):
+      // wrapping them would mean concatenation or, worse, real newlines in the
+      // output. URLs and regexes can't be broken at all.
+      'max-len': [
+        'error',
+        {
+          code: 80,
+          ignoreStrings: true,
+          ignoreTemplateLiterals: true,
+          ignoreUrls: true,
+          ignoreRegExpLiterals: true,
+        },
+      ],
+    },
   },
 ])

@@ -106,7 +106,9 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
   function handleDragStart({ active }: DragStartEvent): void {
     preDragBoard.current = board;
     if (active.data.current?.type === "column") {
-      setActiveColumn(board.columns.find((c) => c.id === String(active.id)) ?? null);
+      setActiveColumn(
+        board.columns.find((c) => c.id === String(active.id)) ?? null,
+      );
       return;
     }
     setActiveCard(findCard(board, String(active.id)));
@@ -138,7 +140,8 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
       if (overIndex >= 0) {
         const isBelow =
           active.rect.current.translated &&
-          active.rect.current.translated.top > over.rect.top + over.rect.height / 2;
+          active.rect.current.translated.top >
+            over.rect.top + over.rect.height / 2;
         index = overIndex + (isBelow ? 1 : 0);
       }
       return moveCardToColumn(current, activeId, overColumn.id, index);
@@ -163,7 +166,8 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
     const next = apply((current) => {
       if (!over) return current;
       const column = findColumnOfCard(current, activeId);
-      const overIndex = column?.cards.findIndex((c) => c.id === String(over.id)) ?? -1;
+      const overIndex =
+        column?.cards.findIndex((c) => c.id === String(over.id)) ?? -1;
       if (!column || overIndex < 0) return current;
       return reorderCard(current, activeId, overIndex);
     });
@@ -177,7 +181,9 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
     preDragBoard.current = null;
   }
 
-  const visibleColumns = board.columns.filter((column) => !isArchiveColumn(column));
+  const visibleColumns = board.columns.filter(
+    (column) => !isArchiveColumn(column),
+  );
 
   // Every tag on a visible card, deduped case-insensitively with first-seen
   // casing kept for display.
@@ -197,7 +203,9 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
 
   // Ignore a filter whose tag no longer exists (e.g. it was just removed).
   const filterKey =
-    activeTag && seenTags.has(activeTag.toLowerCase()) ? activeTag.toLowerCase() : null;
+    activeTag && seenTags.has(activeTag.toLowerCase())
+      ? activeTag.toLowerCase()
+      : null;
 
   const displayColumns = filterKey
     ? visibleColumns.map((column) => ({
@@ -220,7 +228,9 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
               className={`filter-tag${filterKey === tag.toLowerCase() ? " filter-tag-active" : ""}`}
               onClick={() =>
                 setActiveTag((current) =>
-                  current && current.toLowerCase() === tag.toLowerCase() ? null : tag
+                  current && current.toLowerCase() === tag.toLowerCase()
+                    ? null
+                    : tag
                 )
               }
             >
@@ -279,9 +289,15 @@ function BoardView({ board, readOnly, apply, restore, save }: BoardViewProps) {
               );
               setAutoEditCardId(id);
             }}
-            onCardTagAdd={(cardId, tag) => commit((b) => addTag(b, cardId, tag))}
-            onCardTagUpdate={(cardId, i, tag) => commit((b) => updateTag(b, cardId, i, tag))}
-            onCardTagRemove={(cardId, i) => commit((b) => removeTag(b, cardId, i))}
+            onCardTagAdd={(cardId, tag) =>
+              commit((b) => addTag(b, cardId, tag))
+            }
+            onCardTagUpdate={(cardId, i, tag) =>
+              commit((b) => updateTag(b, cardId, i, tag))
+            }
+            onCardTagRemove={(cardId, i) =>
+              commit((b) => removeTag(b, cardId, i))
+            }
             onRemove={() => commit((b) => removeColumn(b, column.id))}
           />
         ))}

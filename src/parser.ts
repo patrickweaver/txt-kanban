@@ -114,13 +114,18 @@ export function parseBoard(text: string): Board {
     }
 
     if (!currentCard) continue;
-    if (propIndent === null || indent.length < propIndent) propIndent = indent.length;
+    if (propIndent === null || indent.length < propIndent) {
+      propIndent = indent.length;
+    }
 
     if (indent.length > propIndent) {
       // Description continuation: strip up to the `- Description: ` content
       // column (property indent + "- ") and keep the rest verbatim, so nested
       // markers and deeper indentation round-trip.
-      appendDescription(currentCard, line.slice(Math.min(indent.length, propIndent + 2)));
+      appendDescription(
+        currentCard,
+        line.slice(Math.min(indent.length, propIndent + 2)),
+      );
       continue;
     }
 

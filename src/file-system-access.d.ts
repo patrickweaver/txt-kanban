@@ -1,7 +1,8 @@
 // Ambient types for the WICG File System Access API entry points that are
 // not yet in TypeScript's DOM lib. FileSystemFileHandle, createWritable, and
 // FileSystemWritableFileStream are already typed there.
-// No top-level import/export: these interfaces must merge into the global scope.
+// No top-level import/export: these interfaces must merge into the global
+// scope.
 
 interface FilePickerAcceptType {
   description?: string;
@@ -16,7 +17,9 @@ interface OpenFilePickerOptions {
 }
 
 interface Window {
-  showOpenFilePicker(options?: OpenFilePickerOptions): Promise<FileSystemFileHandle[]>;
+  showOpenFilePicker(
+    options?: OpenFilePickerOptions,
+  ): Promise<FileSystemFileHandle[]>;
 }
 
 interface FileSystemHandle {

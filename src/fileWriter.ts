@@ -1,6 +1,9 @@
 import type { SaveStatus } from "./types";
 
-async function writeToHandle(handle: FileSystemFileHandle, text: string): Promise<void> {
+async function writeToHandle(
+  handle: FileSystemFileHandle,
+  text: string,
+): Promise<void> {
   if ((await handle.queryPermission({ mode: "readwrite" })) !== "granted") {
     if ((await handle.requestPermission({ mode: "readwrite" })) !== "granted") {
       throw new Error("Write permission denied");

@@ -7,7 +7,8 @@ export interface BoardState {
   boardRef: React.RefObject<Board | null>;
   /** null closes the board and returns to the start screen. */
   load(board: Board | null): void;
-  /** Applies a pure mutation and returns the next board so callers can save it. */
+  /** Applies a pure mutation and returns the next board so callers can save
+   *  it. */
   apply(fn: (board: Board) => Board): Board;
   /** Replaces the whole board (drag-cancel restore). */
   restore(board: Board): void;
